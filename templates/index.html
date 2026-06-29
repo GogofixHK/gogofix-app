@@ -1348,7 +1348,13 @@ async function submitServiceOrder() {
           document.getElementById('lucky-result').style.display = 'none';
           document.getElementById('page-lucky').style.display = 'block';
           loadSpinPrizes();
-          switchPage('lucky');
+          // 直接顯示抽獎頁面
+          pageList.forEach(p => {
+            const el = document.getElementById('page-' + p);
+            if (el) el.style.display = 'none';
+          });
+          document.getElementById('page-lucky').style.display = 'block';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }, 500);
       // 重置表單
@@ -2023,9 +2029,36 @@ let luckySpinResult = null;
   if (btn) { btn.disabled = false; btn.textContent = '🎰 開始抽獎！'; }
 }
 
+// ============ 頁面切換 ============
+const pageList = ['home','shop','services','recycle','chat','repair','lucky'];
+const navBtnList = ['home','shop','services','recycle','chat'];
+
+function switchPage(page) {
+  // 隱藏所有頁面
+  pageList.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = 'none';
+  });
+  // 顯示目標頁面
+  const target = document.getElementById('page-' + page);
+  if (target) {
+    target.style.display = 'block';
+    target.classList.add('active');
+  }
+  // 更新頂部 nav-tab 樣式
+  navBtnList.forEach(p => {
+    const btn = document.querySelector('.nav-tab[onclick*="' + p + '"]');
+    if (btn) btn.classList.toggle('active', p === page);
+  });
+  // 滾動到頂部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // ============ 初始化 ============
 // 載入商店數據（預載）
 loadProducts();
+// 預設顯示首頁
+setTimeout(() => switchPage('home'), 100);
 </script>
 
 </body>
