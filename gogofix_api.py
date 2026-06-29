@@ -148,6 +148,28 @@ def init_db():
     )
     """)
     
+    # 維修服務訂單表（客戶下單）
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS service_orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_no TEXT UNIQUE NOT NULL,
+        customer_name TEXT NOT NULL,
+        customer_phone TEXT NOT NULL,
+        customer_email TEXT DEFAULT '',
+        device_type TEXT DEFAULT '',
+        device_model TEXT DEFAULT '',
+        service_id INTEGER DEFAULT 0,
+        service_name TEXT DEFAULT '',
+        issue_description TEXT DEFAULT '',
+        estimated_price INTEGER DEFAULT 0,
+        payment_method TEXT DEFAULT 'cash',
+        payment_status TEXT DEFAULT 'unpaid',
+        order_status TEXT DEFAULT 'pending',
+        note TEXT DEFAULT '',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    
     # 抽獎獎品表
     c.execute("""
     CREATE TABLE IF NOT EXISTS lucky_draw_prizes (
