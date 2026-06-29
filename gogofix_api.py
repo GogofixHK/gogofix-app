@@ -26,7 +26,10 @@ app.add_middleware(
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "gogofix.db")
+# 在 Docker 中使用 /data 目錄存儲資料庫，本地使用當前目錄
+DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.path.join(DATA_DIR, "gogofix.db")
 
 # ============ 數據庫初始化 ============
 def init_db():
@@ -902,9 +905,13 @@ def get_draw_records():
     db.close()
     return [dict(r) for r in rows]
 
-# ============ 每日自動更新價格（啟動時也更新一次）============
-try:
-    fetch_recycle_prices()
-    print("✅ 回收價格已初始化/更新")
-except:
-    pass
+# ============ 每日自動更新價格（啟動時背景執行）============
+import threading
+def _init_prices_background():
+    try:
+        fetch_recycle_prices()
+        print("✅ 回收價格已初始化/更新")
+    except Exception as e:
+        print(f"⚠️ 價格初始化失敗（不影響網站運行）: {e}")
+
+threading.Thread(target=_init_prices_background, daemon=True).start()
