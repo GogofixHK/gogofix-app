@@ -25,7 +25,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DB_PATH = "/workspace/gogofix_app/gogofix.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "gogofix.db")
 
 # ============ 數據庫初始化 ============
 def init_db():
@@ -455,7 +456,7 @@ def health_check():
     return {"status": "ok", "shop": "GoGofix 手機維修專門店"}
 
 # ============ 掛載靜態檔案 ============
-app.mount("/static", StaticFiles(directory="/workspace/gogofix_app/static"), name="static")
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 # 啟動方式：uvicorn gogofix_api:app --host 0.0.0.0 --port 8000
 
@@ -464,11 +465,11 @@ from fastapi.responses import FileResponse
 
 @app.get("/", response_class=HTMLResponse)
 def home_page():
-    return FileResponse("/workspace/gogofix_app/templates/index.html")
+    return FileResponse(os.path.join(BASE_DIR, "templates/index.html"))
 
 @app.get("/admin", response_class=HTMLResponse)
 def admin_page():
-    return FileResponse("/workspace/gogofix_app/templates/admin.html")
+    return FileResponse(os.path.join(BASE_DIR, "templates/admin.html"))
 
 # ============ 新增商品 API（後台用）============
 class ProductAdd(BaseModel):
