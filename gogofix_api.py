@@ -2,7 +2,7 @@
 GoGofix 手機維修專門店 - 後端 API
 使用 FastAPI + SQLite
 """
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +12,7 @@ import sqlite3
 import os
 import requests
 from bs4 import BeautifulSoup
+import hashlib
 
 # ============ 初始化 ============
 app = FastAPI(title="GoGofix API", version="1.0.0")
@@ -201,16 +202,27 @@ def init_db():
     c.execute("""
     CREATE TABLE IF NOT EXISTS lucky_draw_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        repair_order_no TEXT NOT NULL,
+        repair_order_no TEXT DEFAULT '',
         customer_name TEXT,
         customer_phone TEXT,
         prize_id INTEGER,
         prize_name TEXT,
         prize_type TEXT,
         coupon_code TEXT,
+        ip_hash TEXT DEFAULT '',
+        user_fingerprint TEXT DEFAULT '',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    
+    # 兼容舊資料庫：如果 lucky_draw_records 缺少新欄位，自動補上
+    record_cols = [r[1] for r in c.execute("PRAGMA table_info(lucky_draw_records)").fetchall()]
+    if 'prize_type' not in record_cols:
+        c.execute("ALTER TABLE lucky_draw_records ADD COLUMN prize_type TEXT DEFAULT ''")
+    if 'ip_hash' not in record_cols:
+        c.execute("ALTER TABLE lucky_draw_records ADD COLUMN ip_hash TEXT DEFAULT ''")
+    if 'user_fingerprint' not in record_cols:
+        c.execute("ALTER TABLE lucky_draw_records ADD COLUMN user_fingerprint TEXT DEFAULT ''")
     
     # 插入預設抽獎獎品
     c.execute("SELECT COUNT(*) FROM lucky_draw_prizes")
@@ -900,21 +912,36 @@ def get_prizes():
     return [dict(r) for r in rows]
 
 @app.post("/api/lucky-draw/spin")
-def spin_lucky_draw(data: dict):
-    """執行抽獎"""
+def spin_lucky_draw(data: dict, request: Request):
+    """執行免費抽獎（不需要維修單號，每日每IP限1次）"""
     repair_order_no = data.get("repair_order_no", "")
     customer_name = data.get("customer_name", "")
     customer_phone = data.get("customer_phone", "")
+    user_fingerprint = data.get("user_fingerprint", "")
+
+    # 用 IP 地址做限頻（每天每人 1 次）
+    client_ip = request.client.host if request.client else "unknown"
+    ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()[:16]
+    today = datetime.now().strftime("%Y-%m-%d")
 
     db = get_db()
 
-    # 檢查是否已抽過（同一維修單號只能抽一次）
+    # 檢查今日是否已抽過（用 IP 限制，每天 1 次）
+    existing = db.execute(
+        "SELECT id FROM lucky_draw_records WHERE ip_hash=? AND date(created_at)=?",
+        (ip_hash, today)
+    ).fetchone()
+    if existing:
+        db.close()
+        return {"success": False, "message": "您今天已經抽過獎了，明天再來吧！"}
+
+    # 如果有維修單號，也檢查不重複
     if repair_order_no:
-        existing = db.execute(
-            "SELECT id FROM lucky_draw_records WHERE repair_order_no=?",
+        existing_order = db.execute(
+            "SELECT id FROM lucky_draw_records WHERE repair_order_no=? AND repair_order_no != ''",
             (repair_order_no,)
         ).fetchone()
-        if existing:
+        if existing_order:
             db.close()
             return {"success": False, "message": "此維修單號已使用過抽獎機會！"}
 
@@ -947,10 +974,12 @@ def spin_lucky_draw(data: dict):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.execute(
         """INSERT INTO lucky_draw_records 
-        (repair_order_no, customer_name, customer_phone, prize_id, prize_name, coupon_code, created_at)
-        VALUES (?,?,?,?,?,?,?)""",
-        (repair_order_no, customer_name, customer_phone, 
-         winner["id"], winner["name"], coupon_code, now)
+        (repair_order_no, customer_name, customer_phone, prize_id, prize_name, 
+         prize_type, coupon_code, ip_hash, user_fingerprint, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?)""",
+        (repair_order_no, customer_name, customer_phone,
+         winner["id"], winner["name"], winner["prize_type"],
+         coupon_code, ip_hash, user_fingerprint, now)
     )
     db.commit()
     db.close()
@@ -962,21 +991,23 @@ def spin_lucky_draw(data: dict):
         "message": f"恭喜您抽到：{winner['name']}！"
     }
 
-@app.get("/api/lucky-draw/check/{order_no}")
-def check_draw_eligibility(order_no: str):
-    """檢查維修單號是否可以抽獎"""
+@app.get("/api/lucky-draw/check")
+def check_draw_eligibility(request: Request):
+    """檢查今日是否可以抽獎（免費模式，用 IP 判斷）"""
+    client_ip = request.client.host if request.client else "unknown"
+    ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()[:16]
+    today = datetime.now().strftime("%Y-%m-%d")
+
     db = get_db()
-    repair = db.execute("SELECT * FROM repairs WHERE order_no=?", (order_no,)).fetchone()
-    used = db.execute("SELECT id FROM lucky_draw_records WHERE repair_order_no=?", (order_no,)).fetchone()
+    existing = db.execute(
+        "SELECT id, prize_name FROM lucky_draw_records WHERE ip_hash=? AND date(created_at)=?",
+        (ip_hash, today)
+    ).fetchone()
     db.close()
 
-    if not repair:
-        return {"eligible": False, "message": "找不到此維修單號"}
-    if used:
-        return {"eligible": False, "message": "此維修單號已使用過抽獎機會"}
-    if dict(repair).get("status") not in ["done", "ready"]:
-        return {"eligible": False, "message": "維修尚未完成，完成後才可抽獎"}
-    return {"eligible": True, "message": "可以抽獎！", "customer_name": dict(repair)["customer_name"]}
+    if existing:
+        return {"eligible": False, "message": "您今天已經抽過獎了，明天再來吧！"}
+    return {"eligible": True, "message": "可以抽獎！"}
 
 @app.get("/api/admin/lucky-draw/records")
 def get_draw_records():

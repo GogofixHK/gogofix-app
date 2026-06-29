@@ -685,6 +685,109 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(60,60,67,0.2); border-radius: 2px; }
+  
+  /* ============ 刮刮卡/翻牌動畫 ============ */
+  .scratch-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 400px;
+    margin: 0 auto 24px;
+  }
+  .scratch-card {
+    aspect-ratio: 3/4;
+    perspective: 1000px;
+    cursor: pointer;
+  }
+  .scratch-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+  .scratch-card.flipped .scratch-card-inner {
+    transform: rotateY(180deg);
+  }
+  .scratch-card-back, .scratch-card-front {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+  }
+  .scratch-card-back {
+    background: linear-gradient(135deg, #34c759, #28a745);
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 4px 16px rgba(52,199,89,0.25);
+    position: relative;
+  }
+  .scratch-card-back::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.08) 8px, rgba(255,255,255,0.08) 16px);
+  }
+  .scratch-card-back-icon {
+    font-size: 36px;
+    position: relative;
+    z-index: 1;
+  }
+  .scratch-card-back-text {
+    font-size: 11px;
+    color: rgba(255,255,255,0.9);
+    font-weight: 700;
+    margin-top: 6px;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 0.5px;
+  }
+  .scratch-card-front {
+    transform: rotateY(180deg);
+    background: var(--card-solid);
+    border: 2px solid var(--separator);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .scratch-card-front.winner {
+    border-color: #ffd700;
+    box-shadow: 0 0 20px rgba(255,215,0,0.4);
+    animation: winnerPulse 0.8s ease;
+  }
+  @keyframes winnerPulse {
+    0% { transform: rotateY(180deg) scale(1); }
+    50% { transform: rotateY(180deg) scale(1.08); }
+    100% { transform: rotateY(180deg) scale(1); }
+  }
+  .scratch-prize-emoji { font-size: 40px; margin-bottom: 6px; }
+  .scratch-prize-name { font-size: 12px; font-weight: 700; line-height: 1.3; padding: 0 6px; }
+  .scratch-prize-lose { font-size: 12px; color: var(--text3); font-weight: 600; }
+  .scratch-card.spinning .scratch-card-back { animation: shakeCard 0.3s ease-in-out; }
+  @keyframes shakeCard {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+  }
+  .repair-note {
+    background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+    border: 1px solid rgba(52,199,89,0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 13px;
+    color: #2e7d32;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .repair-note-icon { font-size: 18px; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -709,7 +812,7 @@
     <button class="nav-tab" onclick="switchPage('shop')">商店</button>
     <button class="nav-tab" onclick="switchPage('services')">維修</button>
     <button class="nav-tab" onclick="switchPage('recycle')">回收</button>
-    <button class="nav-tab" onclick="switchPage('lucky')" style="color:#ff9500; font-weight:700;">🎰 抽獎</button>
+    <button class="nav-tab" onclick="switchPage('lucky')" style="color:#34c759; font-weight:700;">🎰 抽獎</button>
   </div>
 </div>
 
@@ -771,10 +874,10 @@
     </div></div>
 
   <!-- 抽獎橫幅 -->
-  <div onclick="switchPage('lucky')" style="background:linear-gradient(135deg,#ff9500,#e67e22); border-radius:var(--radius-md); padding:16px 20px; display:flex; align-items:center; gap:14px; cursor:pointer; margin-bottom:20px; box-shadow:0 4px 16px rgba(255,149,0,0.3); transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+  <div onclick="switchPage('lucky')" style="background:linear-gradient(135deg,#34c759,#28a745); border-radius:var(--radius-md); padding:16px 20px; display:flex; align-items:center; gap:14px; cursor:pointer; margin-bottom:20px; box-shadow:0 4px 16px rgba(52,199,89,0.3); transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
     <div style="font-size:36px; animation:bounce 2s infinite;">🎰</div>
     <div style="flex:1; color:white;">
-      <div style="font-size:16px; font-weight:800; letter-spacing:-0.3px;">維修下單即抽獎</div>
+      <div style="font-size:16px; font-weight:800; letter-spacing:-0.3px;">免費幸運抽獎</div>
       <div style="font-size:12px; opacity:0.9; margin-top:2px;">100%中獎 · 維修折扣·免費配件</div>
     </div>
     <div style="background:rgba(255,255,255,0.25); padding:6px 14px; border-radius:20px; color:white; font-size:13px; font-weight:700;">去抽獎 →</div>
@@ -1009,13 +1112,13 @@
 <!-- ==================== 抽獎頁面 ==================== -->
 <div class="page" id="page-lucky">
 
-  <!-- 抽獎主視覺橫幅 -->
-  <div style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460); border-radius:var(--radius-lg); padding:28px 20px; text-align:center; margin-bottom:20px; position:relative; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+  <!-- 抽獎主視覺橫幅（綠色主題） -->
+  <div style="background:linear-gradient(135deg,#1b5e20,#2e7d32,#43a047); border-radius:var(--radius-lg); padding:28px 20px; text-align:center; margin-bottom:20px; position:relative; overflow:hidden; box-shadow:0 8px 32px rgba(46,125,50,0.3);">
     <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle,rgba(255,215,0,0.15),transparent 70%); border-radius:50%;"></div>
-    <div style="position:absolute; bottom:-20px; left:-20px; width:100px; height:100px; background:radial-gradient(circle,rgba(255,149,0,0.12),transparent 70%); border-radius:50%;"></div>
+    <div style="position:absolute; bottom:-20px; left:-20px; width:100px; height:100px; background:radial-gradient(circle,rgba(255,255,255,0.08),transparent 70%); border-radius:50%;"></div>
     <div style="font-size:48px; margin-bottom:8px; position:relative; z-index:1; animation:bounce 2s infinite;">🎰</div>
-    <h2 style="font-size:24px; font-weight:800; color:#fff; letter-spacing:-0.5px; position:relative; z-index:1; margin-bottom:6px;">幸運抽獎轉盤</h2>
-    <div style="font-size:13px; color:rgba(255,255,255,0.7); position:relative; z-index:1;">維修下單即可抽獎 · 100% 中獎</div>
+    <h2 style="font-size:24px; font-weight:800; color:#fff; letter-spacing:-0.5px; position:relative; z-index:1; margin-bottom:6px;">免費幸運抽獎</h2>
+    <div style="font-size:13px; color:rgba(255,255,255,0.8); position:relative; z-index:1;">人人可抽 · 100% 中獎 · 每日一次</div>
     <style>@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}</style>
   </div>
 
@@ -1027,47 +1130,33 @@
     </div>
   </div>
 
-  <!-- 輸入單號驗證區 -->
-  <div id="lucky-check-area" style="background:var(--card-solid); border-radius:var(--radius-md); padding:20px; box-shadow:var(--shadow-sm); margin-bottom:16px;">
-    <div style="font-size:15px; font-weight:700; margin-bottom:14px; color:var(--text);">🎫 輸入維修單號抽獎</div>
-    <div class="form-group" style="margin-bottom:12px;">
-      <input type="text" class="form-input" id="lucky-order-no" placeholder="例如：GF20260626xxxx" style="font-size:16px; letter-spacing:1px;">
-    </div>
-    <button class="btn-primary" onclick="checkLuckyEligibility()" style="margin-bottom:8px;">🎰 立即抽獎</button>
-    <div id="lucky-check-msg" style="margin-top:8px; font-size:13px; text-align:center;"></div>
-    <div style="margin-top:16px; padding:14px; background:linear-gradient(135deg,#f0f4ff,#e8eeff); border-radius:12px; text-align:center;">
-      <div style="font-size:13px; color:var(--text2); margin-bottom:8px;">還沒有維修單號？</div>
-      <button onclick="switchPage('services')" style="background:linear-gradient(135deg,#007aff,#5856d6); color:white; border:none; padding:10px 24px; border-radius:20px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(0,122,255,0.3);">
-        📱 立即預約維修
-      </button>
-      <div style="font-size:11px; color:var(--text3); margin-top:8px;">維修完成即可抽獎，100%中獎！</div>
+  <!-- 引導維修備註 -->
+  <div class="repair-note">
+    <div class="repair-note-icon">📌</div>
+    <div>
+      <strong>獎品使用須知：</strong><br>
+      中獎後請截圖保存兌換碼，並於<strong>預約維修後到店使用</strong>。
+      獎品不可折現，有效期限 30 天。
     </div>
   </div>
 
-  <!-- CSGO 開箱風格抽獎區（驗證後顯示）-->
-  <div id="lucky-spin-area" style="display:none; text-align:center;">
-
-    <div style="font-size:15px; color:var(--green); font-weight:700; margin-bottom:16px;" id="lucky-welcome"></div>
-
-    <!-- CSGO 風格滾動條容器 -->
-    <div style="position:relative; max-width:400px; margin:0 auto 24px; overflow:hidden; border-radius:16px; background:linear-gradient(180deg,#1a1a2e,#16213e); padding:20px 0; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-      <!-- 中間指示線 -->
-      <div style="position:absolute; left:50%; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#ffd700,#ff8c00,#ffd700); z-index:10; box-shadow:0 0 12px rgba(255,215,0,0.6); transform:translateX(-50%);"></div>
-      <!-- 指示線箭頭 -->
-      <div style="position:absolute; left:50%; top:-2px; transform:translateX(-50%); width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid #ffd700; z-index:11; filter:drop-shadow(0 0 4px rgba(255,215,0,0.8));"></div>
-      <div style="position:absolute; left:50%; bottom:-2px; transform:translateX(-50%); width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #ffd700; z-index:11; filter:drop-shadow(0 0 4px rgba(255,215,0,0.8));"></div>
-
-      <!-- 滾動軌道 -->
-      <div id="csgo-track" style="display:flex; transition:transform 0.05s linear; will-change:transform;">
-        <!-- JS 動態生成獎品格 -->
-      </div>
+  <!-- 翻牌抽獎區 -->
+  <div id="lucky-scratch-area" style="text-align:center;">
+    <div style="font-size:15px; color:var(--green); font-weight:700; margin-bottom:16px;" id="lucky-welcome">🎯 選擇一張卡片翻開，測試你的好運！</div>
+    <div class="scratch-container" id="scratch-container">
+      <!-- JS 動態生成 6 張卡片 -->
     </div>
+    <div id="scratch-status" style="font-size:13px; color:var(--text3); margin-top:12px; min-height:20px;"></div>
+    <button id="scratch-reset-btn" class="btn-primary" onclick="resetScratchCards()" style="display:none; margin-top:16px; width:auto; padding:10px 24px; font-size:14px; background:var(--green);">🔄 再抽一次</button>
+  </div>
 
-    <!-- 抽獎按鈕 -->
-    <button id="spin-btn" class="btn-primary" onclick="startSpin()" style="width:240px; font-size:18px; padding:16px; border-radius:30px; background:linear-gradient(135deg,#007aff,#5856d6); box-shadow:0 4px 16px rgba(88,86,214,0.4); border:none; cursor:pointer; font-family:inherit;">
-      🎰 開始抽獎！
+  <!-- 引導維修 CTA -->
+  <div style="margin-top:24px; padding:16px; background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-radius:var(--radius-md); text-align:center;">
+    <div style="font-size:14px; font-weight:700; color:#1565c0; margin-bottom:8px;">🔧 需要維修服務？</div>
+    <div style="font-size:12px; color:#546e7a; margin-bottom:12px;">中獎獎品需在維修後使用，立即預約維修享折扣！</div>
+    <button onclick="switchPage('services')" style="background:linear-gradient(135deg,#007aff,#5856d6); color:white; border:none; padding:10px 24px; border-radius:20px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(0,122,255,0.3);">
+      📱 立即預約維修
     </button>
-    <div style="font-size:12px; color:var(--text3); margin-top:8px;">每個維修單號只有一次機會</div>
   </div>
 
 </div>
@@ -1075,25 +1164,26 @@
 <!-- ==================== 中獎彈窗 ==================== -->
 <div class="modal-overlay" id="lucky-prize-modal" style="z-index:300;">
   <div class="modal" style="text-align:center; background:linear-gradient(180deg,#1a1a2e,#16213e); color:white; border-radius:var(--radius-xl) var(--radius-xl) 0 0;">
-    <!-- 慶祝粒子背景 -->
     <div id="confetti-area" style="position:absolute; top:0; left:0; right:0; bottom:0; overflow:hidden; pointer-events:none; border-radius:inherit;"></div>
-    
     <div style="position:relative; z-index:2;">
       <div style="font-size:14px; color:rgba(255,255,255,0.6); margin-bottom:4px;" id="prize-modal-label">🎉 恭喜中獎！</div>
       <div id="prize-modal-emoji" style="font-size:72px; margin:16px 0 8px; animation:bounce 0.6s ease;">🎁</div>
       <div id="prize-modal-name" style="font-size:26px; font-weight:800; letter-spacing:-0.3px; margin-bottom:8px; background:linear-gradient(135deg,#ffd700,#ff9500); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">獎品名稱</div>
       <div id="prize-modal-desc" style="font-size:14px; color:rgba(255,255,255,0.7); margin-bottom:20px;">獎品描述</div>
-      
       <div id="prize-modal-coupon" style="display:none; background:rgba(255,255,255,0.1); backdrop-filter:blur(10px); border-radius:12px; padding:16px; margin-bottom:20px; border:1px solid rgba(255,215,0,0.3);">
         <div style="font-size:11px; color:rgba(255,255,255,0.6); margin-bottom:6px;">🎟️ 您的兌換碼</div>
         <div id="prize-modal-code" style="font-size:24px; font-weight:800; letter-spacing:3px; color:#ffd700;">XXXX</div>
         <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:8px;">📍 請到店出示此碼領取獎品</div>
       </div>
-      
+      <div id="prize-modal-repair-hint" style="display:none; background:rgba(52,199,89,0.15); border:1px solid rgba(52,199,89,0.3); border-radius:12px; padding:12px; margin-bottom:16px;">
+        <div style="font-size:12px; color:rgba(255,255,255,0.9); line-height:1.6;">
+          🔧 <strong>請預約維修後使用此獎品</strong><br>
+          到店出示兌換碼即可享有相應優惠
+        </div>
+      </div>
       <a id="prize-modal-wa" href="#" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#25d366; color:white; padding:14px; border-radius:var(--radius-sm); text-decoration:none; font-weight:700; font-size:15px; margin-bottom:12px;">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp 確認領獎
       </a>
-      
       <button onclick="closePrizeModal()" style="background:rgba(255,255,255,0.15); color:white; border:none; padding:12px 24px; border-radius:var(--radius-sm); font-size:14px; cursor:pointer; width:100%; font-family:inherit;">關閉</button>
     </div>
   </div>
@@ -1440,15 +1530,12 @@ async function submitServiceOrder() {
       closeServiceOrderModal();
       // 彈出抽獎機會
       setTimeout(() => {
-        if (confirm('🎉 恭喜！您獲得一次抽獎機會！\n\n是否立即抽獎？')) {
+        if (confirm('🎉 恭喜！您獲得一次免費抽獎機會！\n\n是否立即抽獎？')) {
           luckyOrderNo = data.order_no;
           luckyCustomerName = name;
           luckyCustomerPhone = phone;
-          document.getElementById('lucky-welcome').textContent = '🎉 ' + name + ' 您好！感謝您的預約，請抽獎！';
-          document.getElementById('lucky-check-area').style.display = 'none';
-          document.getElementById('lucky-spin-area').style.display = 'block';
-          loadSpinPrizes();
-          // 直接顯示抽獎頁面
+          const welcomeEl = document.getElementById('lucky-welcome');
+          if (welcomeEl) welcomeEl.textContent = '🎉 ' + name + ' 您好！感謝您的預約，請翻牌抽獎！';
           switchPage('lucky');
         }
       }, 500);
@@ -1863,93 +1950,17 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ============ 抽獎系統 (CSGO 開箱風格) ============
+// ============ 抽獎系統 (刮刮卡/翻牌風格) ============
 let luckyOrderNo = '';
 let luckyCustomerName = '';
 let luckyCustomerPhone = '';
-let luckySpinResult = null;
 let spinPrizes = [];
 let isSpinning = false;
 let spinResultData = null;
+let scratchCardElements = [];
+let scratchRevealed = false;
 
-// 獎品顏色映射 (CSGO 稀有度風格)
-const PRIZE_COLORS = [
-  { bg: 'linear-gradient(135deg,#4a69bd,#6a89cc)', border: '#4a69bd', label: '普通' },      // 藍
-  { bg: 'linear-gradient(135deg,#6a89cc,#82ccdd)', border: '#6a89cc', label: '普通' },      // 淺藍
-  { bg: 'linear-gradient(135deg,#7f8fa6,#a4b0be)', border: '#7f8fa6', label: '普通' },      // 灰
-  { bg: 'linear-gradient(135deg,#9b59b6,#c39bd3)', border: '#9b59b6', label: '稀有' },      // 紫
-  { bg: 'linear-gradient(135deg,#e74c3c,#f1948a)', border: '#e74c3c', label: '稀有' },      // 紅
-];
-
-// 驗證抽獎資格
-async function checkLuckyEligibility() {
-  const orderNo = document.getElementById('lucky-order-no').value.trim().toUpperCase();
-  const msg = document.getElementById('lucky-check-msg');
-
-  if (!orderNo) {
-    msg.innerHTML = '<span style="color:var(--red);">請輸入維修單號</span>';
-    return;
-  }
-
-  msg.innerHTML = '<span style="color:var(--text2);">驗證中...</span>';
-
-  try {
-    const res = await fetch(API + '/api/lucky-draw/check/' + encodeURIComponent(orderNo));
-    const data = await res.json();
-
-    if (data.eligible) {
-      luckyOrderNo = orderNo;
-      luckyCustomerName = data.customer_name || '';
-      msg.innerHTML = '';
-      document.getElementById('lucky-check-area').style.display = 'none';
-      document.getElementById('lucky-spin-area').style.display = 'block';
-      document.getElementById('lucky-welcome').textContent = `🎉 ${luckyCustomerName} 您好！維修已完成，請抽獎！`;
-      await loadSpinPrizes();
-    } else {
-      msg.innerHTML = `<span style="color:var(--red);">❌ ${data.message}</span>`;
-    }
-  } catch(e) {
-    msg.innerHTML = '<span style="color:var(--red);">網絡錯誤，請稍後再試</span>';
-  }
-}
-
-// 載入獎品並生成 CSGO 滾動條
-async function loadSpinPrizes() {
-  try {
-    const res = await fetch(API + '/api/lucky-draw/prizes');
-    spinPrizes = await res.json();
-    buildCSGOTrack();
-  } catch(e) {
-    console.error('載入獎品失敗', e);
-  }
-}
-
-// 構建 CSGO 風格的獎品滾動條
-function buildCSGOTrack() {
-  const track = document.getElementById('csgo-track');
-  if (!track || spinPrizes.length === 0) return;
-
-  // 生成足夠多的獎品格（重複多次讓滾動效果更好）
-  const repeatCount = 12;
-  let html = '';
-
-  for (let r = 0; r < repeatCount; r++) {
-    spinPrizes.forEach((prize, i) => {
-      const colorScheme = PRIZE_COLORS[i % PRIZE_COLORS.length];
-      const emoji = getPrizeEmoji(prize.name);
-      html += `
-        <div style="flex-shrink:0; width:110px; padding:12px 6px; text-align:center; margin:0 3px; border-radius:10px; background:${colorScheme.bg}; border:2px solid ${colorScheme.border}; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
-          <div style="font-size:28px; margin-bottom:6px;">${emoji}</div>
-          <div style="color:white; font-size:11px; font-weight:700; text-shadow:0 1px 2px rgba(0,0,0,0.5); line-height:1.3;">${prize.name}</div>
-          <div style="color:rgba(255,255,255,0.7); font-size:9px; margin-top:3px; text-transform:uppercase; letter-spacing:1px;">${colorScheme.label}</div>
-        </div>`;
-    });
-  }
-
-  track.innerHTML = html;
-}
-
-// 獎品名稱對應 emoji
+// 獎品名稱對應 emoji（保留給 prize-preview 用）
 function getPrizeEmoji(name) {
   if (name.includes('充電線')) return '🔌';
   if (name.includes('Mon') || name.includes('貼')) return '📱';
@@ -1959,134 +1970,177 @@ function getPrizeEmoji(name) {
   return '🎁';
 }
 
-// 開始 CSGO 風格抽獎
-async function startSpin() {
-  if (isSpinning) return;
-  isSpinning = true;
-
-  const btn = document.getElementById('spin-btn');
-  btn.disabled = true;
-  btn.textContent = '🎰 開箱中...';
-
-  // 先從後台抽出結果
+// 載入獎品並生成翻牌
+async function loadSpinPrizes() {
   try {
+    const res = await fetch(API + '/api/lucky-draw/prizes');
+    spinPrizes = await res.json();
+    buildScratchCards();
+  } catch(e) {
+    console.error('載入獎品失敗', e);
+    const c = document.getElementById('scratch-container');
+    if (c) c.innerHTML = '<div style="grid-column:1/-1; color:var(--text3); font-size:13px; padding:20px;">載入失敗，請重新整理</div>';
+  }
+}
+
+// 構建 6 張刮刮卡
+function buildScratchCards() {
+  const container = document.getElementById('scratch-container');
+  if (!container || spinPrizes.length === 0) return;
+
+  container.innerHTML = '';
+  scratchCardElements = [];
+  scratchRevealed = false;
+
+  for (let i = 0; i < 6; i++) {
+    const card = document.createElement('div');
+    card.className = 'scratch-card';
+    card.innerHTML = `
+      <div class="scratch-card-inner">
+        <div class="scratch-card-back">
+          <div class="scratch-card-back-icon">🎁</div>
+          <div class="scratch-card-back-text">翻開</div>
+        </div>
+        <div class="scratch-card-front">
+          <div class="scratch-prize-emoji">❓</div>
+          <div class="scratch-prize-name">...</div>
+        </div>
+      </div>
+    `;
+    card.addEventListener('click', () => onCardClick(i));
+    container.appendChild(card);
+    scratchCardElements.push(card);
+  }
+
+  const status = document.getElementById('scratch-status');
+  if (status) status.textContent = '點擊任意一張卡片翻開';
+  const resetBtn = document.getElementById('scratch-reset-btn');
+  if (resetBtn) resetBtn.style.display = 'none';
+}
+
+// 用戶點擊卡片翻牌
+async function onCardClick(cardIndex) {
+  if (isSpinning || scratchRevealed) return;
+
+  isSpinning = true;
+  scratchRevealed = true;
+
+  const clickedCard = scratchCardElements[cardIndex];
+  clickedCard.classList.add('spinning');
+
+  const statusEl = document.getElementById('scratch-status');
+  if (statusEl) statusEl.textContent = '抽獎中...';
+
+  // 從後端獲取中獎結果
+  try {
+    const fingerprint = generateFingerprint();
     const res = await fetch(API + '/api/lucky-draw/spin', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        repair_order_no: luckyOrderNo,
-        customer_name: luckyCustomerName,
-        customer_phone: luckyCustomerPhone
+        repair_order_no: luckyOrderNo || '',
+        customer_name: luckyCustomerName || '',
+        customer_phone: luckyCustomerPhone || '',
+        user_fingerprint: fingerprint
       })
     });
     spinResultData = await res.json();
   } catch(e) {
-    showToast('網絡錯誤，請稍後再試');
+    if (statusEl) statusEl.textContent = '網絡錯誤，請稍後再試';
+    clickedCard.classList.remove('spinning');
     isSpinning = false;
-    btn.disabled = false;
-    btn.textContent = '🎰 開始抽獎！';
+    scratchRevealed = false;
     return;
   }
 
   if (!spinResultData.success) {
-    showToast(spinResultData.message || '抽獎失敗');
+    if (statusEl) statusEl.innerHTML = `<span style="color:var(--red);">${spinResultData.message || '抽獎失敗'}</span>`;
+    clickedCard.classList.remove('spinning');
     isSpinning = false;
-    btn.disabled = false;
-    btn.textContent = '🎰 開始抽獎！';
+    scratchRevealed = false;
     return;
   }
 
-  // 找到中獎獎品在陣列中的索引
-  const prizeIdx = spinPrizes.findIndex(p => p.id === spinResultData.prize.id);
-  const itemWidth = 116; // 每個獎品格寬度 + margin
+  const winnerPrize = spinResultData.prize;
 
-  // 目標：讓中獎的那個格子停在畫面中央（指示線位置）
-  // 總共 repeatCount * prizes.length 個格子，中獎的那個在中間區域
-  const totalItems = 12 * spinPrizes.length;
-  const targetItemIdx = (6 * spinPrizes.length) + prizeIdx; // 第6組中的目標獎品
-  const targetOffset = targetItemIdx * itemWidth;
+  // 延遲讓 spinning 動畫播放
+  await new Promise(r => setTimeout(r, 400));
+  clickedCard.classList.remove('spinning');
 
-  // 開始位置在最左邊
-  const track = document.getElementById('csgo-track');
-  track.style.transform = 'translateX(0)';
-
-  // 計算總滑動距離（加一些額外距離確保有足夠滾動效果）
-  const containerWidth = Math.min(window.innerWidth - 40, 400);
-  const centerOffset = containerWidth / 2 - itemWidth / 2;
-  const finalPosition = -(targetOffset - centerOffset);
-
-  // CSGO 風格動畫：快速 → 減速 → 微調
-  const totalDuration = 5000; // 5秒
-  const fastPhase = 0.6;      // 前60%快速
-  const slowPhase = 0.3;      // 中間30%減速
-  const creepPhase = 0.1;     // 最後10%微調（來回震動）
-
-  const startTime = performance.now();
-  let currentPos = 0;
-
-  function csgoEasing(t, phase) {
-    if (phase === 'fast') return t * t * 0.8;                           // 加速
-    if (phase === 'slow') return 0.8 + 0.2 * (1 - Math.pow(1 - t, 3)); // 減速
-    return 1;                                                           // 到位
+  // 翻開被點擊的卡片（中獎結果）
+  const frontEl = clickedCard.querySelector('.scratch-card-front');
+  frontEl.innerHTML = `
+    <div class="scratch-prize-emoji">${winnerPrize.emoji || '🎁'}</div>
+    <div class="scratch-prize-name" style="color:${winnerPrize.color || '#007aff'};">${winnerPrize.name}</div>
+  `;
+  if (winnerPrize.prize_type !== 'empty') {
+    frontEl.classList.add('winner');
   }
+  clickedCard.classList.add('flipped');
 
-  function animate(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / totalDuration, 1);
+  // 依次翻開其他 5 張卡片
+  const otherPrizes = spinPrizes.filter(p => p.id !== winnerPrize.id);
+  const loseMessages = ['謝謝參與', '再接再厲', '下次好運', '差一點點', '繼續努力'];
+  let delayCount = 0;
 
-    let easedProgress;
-    if (progress <= fastPhase) {
-      easedProgress = csgoEasing(progress / fastPhase, 'fast');
-    } else if (progress <= fastPhase + slowPhase) {
-      const t = (progress - fastPhase) / slowPhase;
-      const slowBase = csgoEasing(1, 'fast');
-      const slowEnd = csgoEasing(1, 'slow');
-      const slowVal = slowBase + (slowEnd - slowBase) * (1 - Math.pow(1 - t, 3));
-      easedProgress = slowVal;
-    } else {
-      // 最後階段微調震動
-      const t = (progress - fastPhase - slowPhase) / creepPhase;
-      const shake = Math.sin(t * Math.PI * 6) * (1 - t) * 15;
-      currentPos = finalPosition + shake;
-      track.style.transform = `translateX(${currentPos}px)`;
+  scratchCardElements.forEach((card, i) => {
+    if (i === cardIndex) return;
+    delayCount++;
+    setTimeout(() => {
+      const front = card.querySelector('.scratch-card-front');
+      const randomPrize = otherPrizes[Math.floor(Math.random() * otherPrizes.length)] || otherPrizes[0];
+      const loseMsg = loseMessages[Math.floor(Math.random() * loseMessages.length)];
+      front.innerHTML = `
+        <div class="scratch-prize-emoji">${randomPrize.emoji || '🎁'}</div>
+        <div class="scratch-prize-lose">${loseMsg}</div>
+      `;
+      card.classList.add('flipped');
+    }, 300 + delayCount * 200);
+  });
 
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        track.style.transform = `translateX(${finalPosition}px)`;
-        // 閃光效果
-        flashEffect();
-        setTimeout(() => showPrizeResult(spinResultData), 800);
-      }
-      return;
-    }
+  // 等待所有卡片翻完後顯示中獎彈窗
+  const totalDelay = 300 + 5 * 200 + 700;
+  setTimeout(() => {
+    isSpinning = false;
+    if (statusEl) statusEl.textContent = '';
+    const resetBtn = document.getElementById('scratch-reset-btn');
+    if (resetBtn) resetBtn.style.display = 'inline-block';
+    flashEffect();
+    setTimeout(() => showPrizeResult(spinResultData), 400);
+  }, totalDelay);
+}
 
-    currentPos = finalPosition * easedProgress;
-    track.style.transform = `translateX(${currentPos}px)`;
-
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      track.style.transform = `translateX(${finalPosition}px)`;
-      flashEffect();
-      setTimeout(() => showPrizeResult(spinResultData), 800);
-    }
+// 生成簡單瀏覽器指紋
+function generateFingerprint() {
+  const data = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    new Date().getTimezoneOffset(),
+    navigator.hardwareConcurrency || 0
+  ].join('|');
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    hash = ((hash << 5) - hash) + data.charCodeAt(i);
+    hash |= 0;
   }
+  return Math.abs(hash).toString(36);
+}
 
-  requestAnimationFrame(animate);
+// 重置翻牌卡片
+function resetScratchCards() {
+  buildScratchCards();
 }
 
 // 中獎閃光效果
 function flashEffect() {
-  const track = document.getElementById('csgo-track');
-  track.style.filter = 'brightness(1.8)';
-  track.style.transition = 'filter 0.15s ease-out';
+  const container = document.getElementById('scratch-container');
+  if (!container) return;
+  container.style.filter = 'brightness(1.5)';
+  container.style.transition = 'filter 0.3s ease-out';
   setTimeout(() => {
-    track.style.filter = 'brightness(1)';
-    setTimeout(() => {
-      track.style.transition = 'transform 0.05s linear';
-    }, 200);
-  }, 150);
+    container.style.filter = 'brightness(1)';
+  }, 300);
 }
 
 // 顯示中獎結果（彈窗）
@@ -2094,7 +2148,6 @@ function showPrizeResult(result) {
   const prize = result.prize;
   const isEmpty = prize.prize_type === 'empty';
 
-  // 填充彈窗內容
   document.getElementById('prize-modal-emoji').textContent = prize.emoji || getPrizeEmoji(prize.name);
   document.getElementById('prize-modal-name').textContent = prize.name;
   document.getElementById('prize-modal-desc').textContent = prize.description || '';
@@ -2103,6 +2156,7 @@ function showPrizeResult(result) {
     document.getElementById('prize-modal-label').textContent = '🙏 再接再厲！';
     document.getElementById('prize-modal-coupon').style.display = 'none';
     document.getElementById('prize-modal-wa').style.display = 'none';
+    document.getElementById('prize-modal-repair-hint').style.display = 'none';
   } else {
     document.getElementById('prize-modal-label').textContent = '🎉 恭喜中獎！';
     if (result.coupon_code) {
@@ -2111,15 +2165,14 @@ function showPrizeResult(result) {
     } else {
       document.getElementById('prize-modal-coupon').style.display = 'none';
     }
-    const waMsg = `🎉 GoGofix 抽獎結果\n\n🎁 獎品：${prize.name}\n📋 兌換碼：${result.coupon_code || '無'}\n📍 請到深水埗福華街123號領取\n\n感謝您光顧 GoGofix 手機維修專門店！`;
+    document.getElementById('prize-modal-repair-hint').style.display = 'block';
+    const waMsg = `🎉 GoGofix 抽獎結果\n\n🎁 獎品：${prize.name}\n📋 兌換碼：${result.coupon_code || '無'}\n\n📌 請預約維修後到店使用此獎品\n📍 深水埗福華街123號\n\n感謝您光顧 GoGofix 手機維修專門店！`;
     document.getElementById('prize-modal-wa').href = `https://wa.me/85252382777?text=${encodeURIComponent(waMsg)}`;
     document.getElementById('prize-modal-wa').style.display = 'flex';
   }
 
-  // 顯示彈窗
   document.getElementById('lucky-prize-modal').classList.add('show');
 
-  // 慶祝粒子效果
   if (!isEmpty) {
     createConfetti();
   }
@@ -2128,8 +2181,6 @@ function showPrizeResult(result) {
 // 關閉中獎彈窗
 function closePrizeModal() {
   document.getElementById('lucky-prize-modal').classList.remove('show');
-  // 重置抽獎區域
-  resetLucky();
 }
 
 // 慶祝粒子效果
@@ -2182,16 +2233,8 @@ function resetLucky() {
   luckyCustomerPhone = '';
   spinResultData = null;
   isSpinning = false;
-  const checkArea = document.getElementById('lucky-check-area');
-  const spinArea = document.getElementById('lucky-spin-area');
-  if (checkArea) checkArea.style.display = 'block';
-  if (spinArea) spinArea.style.display = 'none';
-  const orderInput = document.getElementById('lucky-order-no');
-  if (orderInput) orderInput.value = '';
-  const msgEl = document.getElementById('lucky-check-msg');
-  if (msgEl) msgEl.innerHTML = '';
-  const btn = document.getElementById('spin-btn');
-  if (btn) { btn.disabled = false; btn.textContent = '🎰 開始抽獎！'; }
+  scratchRevealed = false;
+  buildScratchCards();
 }
 
 // ============ 頁面切換 ============
@@ -2214,9 +2257,10 @@ function switchPage(page) {
     target.style.display = 'block';
     target.classList.add('active');
   }
-  // 如果切換到抽獎頁，載入獎品預覽
+  // 如果切換到抽獎頁，載入獎品預覽和翻牌
   if (page === 'lucky') {
     loadPrizePreview();
+    loadSpinPrizes();
   }
   // 更新頂部 nav-tab 樣式
   topNavList.forEach(p => {
