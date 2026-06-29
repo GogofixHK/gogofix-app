@@ -2031,13 +2031,17 @@ let luckySpinResult = null;
 
 // ============ 頁面切換 ============
 const pageList = ['home','shop','services','recycle','chat','repair','lucky'];
-const navBtnList = ['home','shop','services','recycle','chat'];
+const topNavList = ['home','shop','services','recycle','chat'];
+const bottomNavList = ['home','shop','services','recycle','chat'];
 
 function switchPage(page) {
   // 隱藏所有頁面
   pageList.forEach(p => {
     const el = document.getElementById('page-' + p);
-    if (el) el.style.display = 'none';
+    if (el) {
+      el.style.display = 'none';
+      el.classList.remove('active');
+    }
   });
   // 顯示目標頁面
   const target = document.getElementById('page-' + page);
@@ -2046,17 +2050,31 @@ function switchPage(page) {
     target.classList.add('active');
   }
   // 更新頂部 nav-tab 樣式
-  navBtnList.forEach(p => {
+  topNavList.forEach(p => {
     const btn = document.querySelector('.nav-tab[onclick*="' + p + '"]');
     if (btn) btn.classList.toggle('active', p === page);
   });
+  // 更新底部導航樣式
+  document.querySelectorAll('.bottom-nav-item').forEach(el => {
+    el.classList.remove('active');
+  });
+  const bottomBtn = document.querySelector('.bottom-nav-item[onclick*="' + page + '"]');
+  if (bottomBtn) bottomBtn.classList.add('active');
   // 滾動到頂部
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ============ 初始化 ============
-// 載入商店數據（預載）
-loadProducts();
+function initApp() {
+  loadProducts();
+  switchPage('home');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 // 預設顯示首頁
 setTimeout(() => switchPage('home'), 100);
 </script>
