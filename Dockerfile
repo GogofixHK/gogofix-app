@@ -17,11 +17,8 @@ COPY static/ static/
 
 EXPOSE 8000
 
-# Python startup script
-RUN echo 'import os, sys' > /start.py && \
-    echo 'port = int(os.environ.get("PORT", "8000"))' >> /start.py && \
-    echo 'print(f"Starting GoGofix on port {port}, DATA_DIR={os.environ.get(\"DATA_DIR\", \"N/A\")}")' >> /start.py && \
-    echo 'import uvicorn' >> /start.py && \
-    echo 'uvicorn.run("gogofix_api:app", host="0.0.0.0", port=port, log_level="info")' >> /start.py
+# Write startup script as a file
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-CMD ["python", "/start.py"]
+CMD ["/start.sh"]
