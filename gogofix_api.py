@@ -188,11 +188,16 @@ def init_db():
     CREATE TABLE IF NOT EXISTS members (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         phone TEXT UNIQUE NOT NULL,
+        password TEXT DEFAULT '',
         name TEXT DEFAULT '',
         email TEXT DEFAULT '',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    # 兼容舊資料庫
+    member_cols = [r[1] for r in c.execute("PRAGMA table_info(members)").fetchall()]
+    if 'password' not in member_cols:
+        c.execute("ALTER TABLE members ADD COLUMN password TEXT DEFAULT ''")
     
     # 抽獎獎品表
     c.execute("""
@@ -886,25 +891,13 @@ def create_service_order(order: ServiceOrderCreate):
     """客戶下單維修服務"""
     db = get_db()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
     # 生成訂單號
     order_no = f"SR{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    
-    # 自動建立/更新會員
-    member_id = order.member_id
-    if order.customer_phone:
-        existing = db.execute("SELECT id FROM members WHERE phone=?", (order.customer_phone,)).fetchone()
-        if existing:
-            member_id = existing["id"]
-            # 更新姓名/電郵
-            if order.customer_name or order.customer_email:
-                db.execute("UPDATE members SET name=COALESCE(NULLIF(?, ''), name), email=COALESCE(NULLIF(?, ''), email) WHERE id=?",
-                           (order.customer_name, order.customer_email, member_id))
-        else:
-            cur = db.execute("INSERT INTO members (phone, name, email, created_at) VALUES (?,?,?,?)",
-                             (order.customer_phone, order.customer_name, order.customer_email, now))
-            member_id = cur.lastrowid
-    
+
+    # 使用傳入的 member_id（客人需先註冊登入）
+    member_id = order.member_id or 0
+
     cur = db.execute(
         """INSERT INTO service_orders 
         (order_no, customer_name, customer_phone, customer_email, member_id, device_type, device_model, 
@@ -973,43 +966,56 @@ def update_order_payment(order_id: int, data: dict):
 
 # ============ 會員系統 API ============
 
-@app.post("/api/members/login")
-def member_login(data: dict):
-    """會員登入/註冊（手機號識別）"""
+@app.post("/api/members/register")
+def member_register(data: dict):
+    """會員註冊"""
     phone = data.get("phone", "").strip()
+    password = data.get("password", "").strip()
     name = data.get("name", "").strip()
     email = data.get("email", "").strip()
-    
-    if not phone:
-        return {"success": False, "message": "請輸入電話號碼"}
-    
+
+    if not phone or not password:
+        return {"success": False, "message": "請輸入電話和密碼"}
+    if len(password) < 4:
+        return {"success": False, "message": "密碼至少4位"}
+
     db = get_db()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    member = db.execute("SELECT * FROM members WHERE phone=?", (phone,)).fetchone()
-    if member:
-        # 已是會員，更新資料
-        if name or email:
-            db.execute("UPDATE members SET name=COALESCE(NULLIF(?, ''), name), email=COALESCE(NULLIF(?, ''), email) WHERE id=?",
-                       (name, email, member["id"]))
-            db.commit()
-            member = db.execute("SELECT * FROM members WHERE id=?", (member["id"],)).fetchone()
-    else:
-        # 新會員
-        cur = db.execute("INSERT INTO members (phone, name, email, created_at) VALUES (?,?,?,?)",
-                         (phone, name, email, now))
-        db.commit()
-        member = db.execute("SELECT * FROM members WHERE id=?", (cur.lastrowid,)).fetchone()
-    
-    # 獲取歷史訂單
+
+    existing = db.execute("SELECT id FROM members WHERE phone=?", (phone,)).fetchone()
+    if existing:
+        db.close()
+        return {"success": False, "message": "此電話已註冊，請直接登入"}
+
+    cur = db.execute("INSERT INTO members (phone, password, name, email, created_at) VALUES (?,?,?,?,?)",
+                     (phone, password, name, email, now))
+    member_id = cur.lastrowid
+    db.commit()
+    member = db.execute("SELECT * FROM members WHERE id=?", (member_id,)).fetchone()
+    orders = db.execute("SELECT * FROM service_orders WHERE member_id=? ORDER BY id DESC LIMIT 20", (member_id,)).fetchall()
+    db.close()
+
+    return {"success": True, "member": dict(member), "orders": [dict(o) for o in orders]}
+
+@app.post("/api/members/login")
+def member_login(data: dict):
+    """會員登入（需要密碼）"""
+    phone = data.get("phone", "").strip()
+    password = data.get("password", "").strip()
+
+    if not phone or not password:
+        return {"success": False, "message": "請輸入電話和密碼"}
+
+    db = get_db()
+    member = db.execute("SELECT * FROM members WHERE phone=? AND password=?", (phone, password)).fetchone()
+    if not member:
+        db.close()
+        return {"success": False, "message": "電話或密碼錯誤"}
+
     orders = db.execute("SELECT * FROM service_orders WHERE member_id=? ORDER BY id DESC LIMIT 20", (member["id"],)).fetchall()
     db.close()
-    
-    return {
-        "success": True,
-        "member": dict(member),
-        "orders": [dict(o) for o in orders]
-    }
+
+    return {"success": True, "member": dict(member), "orders": [dict(o) for o in orders]}
 
 @app.get("/api/members/{phone}/orders")
 def get_member_orders(phone: str):

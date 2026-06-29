@@ -947,12 +947,14 @@
 
     <!-- 會員快速登入 -->
     <div id="so-member-login" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9); border-radius:12px; padding:14px; margin-bottom:16px;">
-      <div style="font-size:13px; font-weight:700; color:#2e7d32; margin-bottom:8px;">👤 會員快速登入（選填）</div>
-      <div style="display:flex; gap:8px;">
-        <input type="tel" class="form-input" id="so-member-phone" placeholder="輸入電話號碼" style="flex:1; margin:0;">
+      <div style="font-size:13px; font-weight:700; color:#2e7d32; margin-bottom:8px;">👤 會員登入（已註冊請登入，自動帶入資料）</div>
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <input type="tel" class="form-input" id="so-member-phone" placeholder="電話號碼" style="flex:1; margin:0;">
+        <input type="password" class="form-input" id="so-member-password" placeholder="密碼" style="flex:1; margin:0;">
         <button onclick="memberQuickLogin()" style="background:var(--green); color:white; border:none; padding:0 16px; border-radius:12px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">登入</button>
       </div>
       <div id="so-member-info" style="display:none; margin-top:8px; font-size:12px; color:#2e7d32;"></div>
+      <div style="font-size:11px; color:var(--text3); margin-top:4px;">未註冊？可直接填寫下方資料下單，或到「我的」頁面註冊</div>
     </div>
 
     <div class="form-group">
@@ -1227,14 +1229,50 @@
 <div class="page" id="page-account">
   <h2 style="font-size:18px; font-weight:900; margin-bottom:16px;">👤 我的帳戶</h2>
 
-  <!-- 會員登入區 -->
+  <!-- 會員註冊/登入區 -->
   <div id="account-login-area" style="background:var(--card-solid); border-radius:var(--radius-md); padding:20px; box-shadow:var(--shadow-sm); margin-bottom:16px;">
-    <div style="font-size:15px; font-weight:700; margin-bottom:14px;">🔑 會員登入</div>
-    <div class="form-group" style="margin-bottom:12px;">
-      <input type="tel" class="form-input" id="account-phone" placeholder="請輸入電話號碼" style="font-size:16px;">
+
+    <!-- Tab 切換 -->
+    <div style="display:flex; gap:0; margin-bottom:16px; border-bottom:2px solid var(--separator);">
+      <button id="tab-login" onclick="switchAccountTab('login')" style="flex:1; padding:10px; border:none; background:none; font-size:15px; font-weight:700; color:var(--accent); border-bottom:2px solid var(--accent); margin-bottom:-2px; cursor:pointer; font-family:inherit;">登入</button>
+      <button id="tab-register" onclick="switchAccountTab('register')" style="flex:1; padding:10px; border:none; background:none; font-size:15px; font-weight:700; color:var(--text2); border-bottom:2px solid transparent; margin-bottom:-2px; cursor:pointer; font-family:inherit;">註冊</button>
     </div>
-    <button class="btn-primary" onclick="accountLogin()" style="background:linear-gradient(135deg,#34c759,#28a745);">登入 / 註冊</button>
-    <div style="font-size:12px; color:var(--text3); margin-top:10px; text-align:center;">用手機號碼即可登入，自動記錄您的維修訂單</div>
+
+    <!-- 登入表單 -->
+    <div id="login-form">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">電話號碼</label>
+        <input type="tel" class="form-input" id="login-phone" placeholder="例如：98765432" style="font-size:16px;">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">密碼</label>
+        <input type="password" class="form-input" id="login-password" placeholder="請輸入密碼" style="font-size:16px;">
+      </div>
+      <button class="btn-primary" onclick="accountLogin()" style="background:linear-gradient(135deg,#34c759,#28a745); width:100%;">登入</button>
+    </div>
+
+    <!-- 註冊表單 -->
+    <div id="register-form" style="display:none;">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">姓名 *</label>
+        <input type="text" class="form-input" id="reg-name" placeholder="請輸入姓名" style="font-size:16px;">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">電話號碼 *</label>
+        <input type="tel" class="form-input" id="reg-phone" placeholder="例如：98765432" style="font-size:16px;">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">密碼 *（至少4位）</label>
+        <input type="password" class="form-input" id="reg-password" placeholder="設定密碼" style="font-size:16px;">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">電郵（選填）</label>
+        <input type="email" class="form-input" id="reg-email" placeholder="example@email.com" style="font-size:16px;">
+      </div>
+      <button class="btn-primary" onclick="accountRegister()" style="background:linear-gradient(135deg,#007aff,#5856d6); width:100%;">註冊</button>
+    </div>
+
+    <div style="font-size:12px; color:var(--text3); margin-top:12px; text-align:center;">註冊後可查看維修訂單進度、累積抽獎機會</div>
   </div>
 
   <!-- 會員資訊+訂單列表（登入後顯示） -->
@@ -1550,6 +1588,18 @@ function openServiceOrderModal() {
   const localISO = new Date(tomorrow - tzOffset).toISOString().slice(0, 16);
   const timeEl = document.getElementById('so-preferred-time');
   if (timeEl && !timeEl.value) timeEl.value = localISO;
+  // 如果已登入會員，自動帶入資料
+  if (accountMember) {
+    currentMemberId = accountMember.id;
+    if (accountMember.name) document.getElementById('so-name').value = accountMember.name;
+    if (accountMember.phone) document.getElementById('so-phone').value = accountMember.phone;
+    if (accountMember.email) document.getElementById('so-email').value = accountMember.email;
+    const infoEl = document.getElementById('so-member-info');
+    if (infoEl) {
+      infoEl.style.display = 'block';
+      infoEl.innerHTML = `✅ 已登入：${accountMember.name || '會員'}`;
+    }
+  }
 }
 
 function closeServiceOrderModal() {
@@ -1564,13 +1614,14 @@ function closePaymentQR() {
 let currentMemberId = 0;
 async function memberQuickLogin() {
   const phone = document.getElementById('so-member-phone').value.trim();
-  if (!phone) { showToast('請輸入電話號碼'); return; }
+  const password = document.getElementById('so-member-password').value.trim();
+  if (!phone || !password) { showToast('請輸入電話和密碼'); return; }
 
   try {
     const res = await fetch(API + '/api/members/login', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ phone: phone })
+      body: JSON.stringify({ phone, password })
     });
     const data = await res.json();
     if (data.success) {
@@ -1666,7 +1717,7 @@ async function submitServiceOrder() {
       }, 500);
 
       // 重置表單
-      ['so-name','so-phone','so-email','so-issue','so-note','so-device-other','so-preferred-time','so-member-phone'].forEach(id => {
+      ['so-name','so-phone','so-email','so-issue','so-note','so-device-other','so-preferred-time','so-member-phone','so-member-password'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -1731,20 +1782,77 @@ function showPaymentQR(orderNo, method, price, serviceName, timeStr) {
 // ============ 會員系統 ============
 let accountMember = null;
 
-async function accountLogin() {
-  const phone = document.getElementById('account-phone').value.trim();
-  if (!phone) { showToast('請輸入電話號碼'); return; }
+function switchAccountTab(tab) {
+  const loginForm = document.getElementById('login-form');
+  const regForm = document.getElementById('register-form');
+  const tabLogin = document.getElementById('tab-login');
+  const tabReg = document.getElementById('tab-register');
+  if (tab === 'login') {
+    loginForm.style.display = 'block';
+    regForm.style.display = 'none';
+    tabLogin.style.color = 'var(--accent)';
+    tabLogin.style.borderBottomColor = 'var(--accent)';
+    tabReg.style.color = 'var(--text2)';
+    tabReg.style.borderBottomColor = 'transparent';
+  } else {
+    loginForm.style.display = 'none';
+    regForm.style.display = 'block';
+    tabLogin.style.color = 'var(--text2)';
+    tabLogin.style.borderBottomColor = 'transparent';
+    tabReg.style.color = 'var(--accent)';
+    tabReg.style.borderBottomColor = 'var(--accent)';
+  }
+}
+
+async function accountRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const password = document.getElementById('reg-password').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+
+  if (!name || !phone || !password) {
+    showToast('請填寫姓名、電話和密碼');
+    return;
+  }
 
   try {
-    const res = await fetch(API + '/api/members/login', {
+    const res = await fetch(API + '/api/members/register', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ phone: phone })
+      body: JSON.stringify({ phone, password, name, email })
     });
     const data = await res.json();
     if (data.success) {
       accountMember = data.member;
       localStorage.setItem('gogofix_member_phone', phone);
+      localStorage.setItem('gogofix_member_password', password);
+      showAccountInfo(data.member, data.orders);
+      showToast('✅ 註冊成功！');
+    } else {
+      showToast(data.message || '註冊失敗');
+    }
+  } catch(e) {
+    showToast('網絡錯誤');
+  }
+}
+
+async function accountLogin() {
+  const phone = document.getElementById('login-phone').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+
+  if (!phone || !password) { showToast('請輸入電話和密碼'); return; }
+
+  try {
+    const res = await fetch(API + '/api/members/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ phone, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      accountMember = data.member;
+      localStorage.setItem('gogofix_member_phone', phone);
+      localStorage.setItem('gogofix_member_password', password);
       showAccountInfo(data.member, data.orders);
       showToast('✅ 登入成功');
     } else {
@@ -1758,9 +1866,11 @@ async function accountLogin() {
 function accountLogout() {
   accountMember = null;
   localStorage.removeItem('gogofix_member_phone');
+  localStorage.removeItem('gogofix_member_password');
   document.getElementById('account-login-area').style.display = 'block';
   document.getElementById('account-info-area').style.display = 'none';
-  document.getElementById('account-phone').value = '';
+  document.getElementById('login-phone').value = '';
+  document.getElementById('login-password').value = '';
 }
 
 function showAccountInfo(member, orders) {
@@ -1771,24 +1881,49 @@ function showAccountInfo(member, orders) {
 
   const ordersEl = document.getElementById('account-orders');
   if (!orders || orders.length === 0) {
-    ordersEl.innerHTML = '<div style="text-align:center; color:var(--text3); font-size:13px; padding:20px;">暫無維修訂單</div>';
+    ordersEl.innerHTML = '<div style="text-align:center; color:var(--text3); font-size:13px; padding:20px;">暫無維修訂單<br><br><button onclick="switchPage(\'services\')" style="background:var(--accent); color:white; border:none; padding:10px 24px; border-radius:20px; font-size:14px; cursor:pointer;">立即預約維修</button></div>';
     return;
   }
 
   const statusMap = {
-    'pending': { label: '待確認', color: '#ff9500' },
-    'confirmed': { label: '已確認', color: '#007aff' },
-    'repairing': { label: '維修中', color: '#5856d6' },
-    'done': { label: '已完成', color: '#34c759' },
-    'cancelled': { label: '已取消', color: '#ff3b30' }
+    'pending': { label: '待確認', color: '#ff9500', step: 1 },
+    'confirmed': { label: '已確認', color: '#007aff', step: 2 },
+    'repairing': { label: '維修中', color: '#5856d6', step: 3 },
+    'done': { label: '已完成', color: '#34c759', step: 4 },
+    'cancelled': { label: '已取消', color: '#ff3b30', step: 0 }
   };
-  const payMap = {'alipay':'支付寶','fps':'轉數快','octopus':'八達通','cash':'現金','unpaid':'未付款','paid':'已付款'};
+  const payMap = {'alipay':'支付寶','fps':'轉數快','octopus':'八達通','cash':'現金'};
+  const steps = ['待確認','已確認','維修中','已完成'];
 
   ordersEl.innerHTML = orders.map(o => {
     const st = statusMap[o.order_status] || statusMap['pending'];
     const payStatus = o.payment_status === 'paid' ? '已付款' : '未付款';
     const payStatusColor = o.payment_status === 'paid' ? '#34c759' : '#ff9500';
     const time = o.preferred_time ? new Date(o.preferred_time).toLocaleString('zh-HK', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '未指定';
+
+    // 進度條
+    let progressBar = '';
+    if (o.order_status !== 'cancelled') {
+      progressBar = `
+        <div style="display:flex; align-items:center; margin:10px 0; padding:0 4px;">
+          ${steps.map((s, i) => {
+            const stepNum = i + 1;
+            const isActive = st.step >= stepNum;
+            const isCurrent = st.step === stepNum;
+            return `
+              <div style="display:flex; align-items:center; flex:1; ${i < steps.length-1 ? '' : 'flex:none;'}">
+                <div style="width:24px; height:24px; border-radius:50%; background:${isActive ? st.color : '#e0e0e0'}; color:white; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; ${isCurrent ? 'box-shadow:0 0 8px '+st.color+'80;' : ''}">${isActive ? '✓' : stepNum}</div>
+                ${i < steps.length-1 ? `<div style="flex:1; height:3px; background:${st.step > stepNum ? st.color : '#e0e0e0'}; margin:0 2px;"></div>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text3); padding:0 4px; margin-bottom:8px;">
+          ${steps.map(s => `<div style="flex:1; text-align:center;">${s}</div>`).join('')}
+        </div>
+      `;
+    }
+
     return `
       <div style="background:var(--card-solid); border-radius:var(--radius-sm); padding:14px; margin-bottom:10px; box-shadow:var(--shadow-sm); border-left:3px solid ${st.color};">
         <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
@@ -1798,10 +1933,13 @@ function showAccountInfo(member, orders) {
         <div style="font-size:14px; font-weight:600; margin-bottom:4px;">${o.service_name || '維修服務'}</div>
         <div style="font-size:12px; color:var(--text2); margin-bottom:2px;">📱 ${o.device_type || ''} ${o.device_model || ''}</div>
         <div style="font-size:12px; color:var(--text2); margin-bottom:2px;">🕐 ${time}</div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+        ${o.issue_description ? `<div style="font-size:12px; color:var(--text2); margin-bottom:2px;">⚠️ ${o.issue_description}</div>` : ''}
+        ${progressBar}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; padding-top:8px; border-top:1px solid var(--separator);">
           <div style="font-size:15px; font-weight:800; color:var(--accent);">HK$${o.estimated_price}</div>
           <div style="font-size:12px; color:${payStatusColor}; font-weight:600;">${payStatus} · ${payMap[o.payment_method]||o.payment_method}</div>
         </div>
+        ${o.note ? `<div style="font-size:11px; color:var(--text3); margin-top:6px;">📝 ${o.note}</div>` : ''}
       </div>
     `;
   }).join('');
@@ -1810,8 +1948,10 @@ function showAccountInfo(member, orders) {
 // 自動登入（localStorage）
 function autoLoginMember() {
   const savedPhone = localStorage.getItem('gogofix_member_phone');
-  if (savedPhone) {
-    document.getElementById('account-phone').value = savedPhone;
+  const savedPassword = localStorage.getItem('gogofix_member_password');
+  if (savedPhone && savedPassword) {
+    document.getElementById('login-phone').value = savedPhone;
+    document.getElementById('login-password').value = savedPassword;
     accountLogin();
   }
 }
