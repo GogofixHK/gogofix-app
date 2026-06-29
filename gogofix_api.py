@@ -175,12 +175,27 @@ def init_db():
     CREATE TABLE IF NOT EXISTS lucky_draw_prizes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
+        description TEXT DEFAULT '',
         prize_type TEXT DEFAULT 'physical',
+        discount_amount INTEGER DEFAULT 0,
         probability REAL DEFAULT 0.1,
+        color TEXT DEFAULT '#007aff',
+        emoji TEXT DEFAULT '🎁',
         is_active INTEGER DEFAULT 1,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    
+    # 相容舊資料庫：如果 lucky_draw_prizes 缺少新欄位，自動補上
+    cols = [r[1] for r in c.execute("PRAGMA table_info(lucky_draw_prizes)").fetchall()]
+    if 'description' not in cols:
+        c.execute("ALTER TABLE lucky_draw_prizes ADD COLUMN description TEXT DEFAULT ''")
+    if 'discount_amount' not in cols:
+        c.execute("ALTER TABLE lucky_draw_prizes ADD COLUMN discount_amount INTEGER DEFAULT 0")
+    if 'color' not in cols:
+        c.execute("ALTER TABLE lucky_draw_prizes ADD COLUMN color TEXT DEFAULT '#007aff'")
+    if 'emoji' not in cols:
+        c.execute("ALTER TABLE lucky_draw_prizes ADD COLUMN emoji TEXT DEFAULT '🎁'")
     
     # 抽獎記錄表
     c.execute("""
@@ -201,15 +216,16 @@ def init_db():
     c.execute("SELECT COUNT(*) FROM lucky_draw_prizes")
     if c.fetchone()[0] == 0:
         default_prizes = [
-            ("$20 維修減免券", "discount", 0.35),
-            ("$50 維修減免券", "discount", 0.25),
-            ("$80 維修減免券", "discount", 0.15),
-            ("手機 Mon 貼", "physical", 0.15),
-            ("手機充電線", "physical", 0.10),
+            ("手機充電線", "Type-C / Lightning 充電線一條", "physical", 0, 0.20, "#007aff", "🔌"),
+            ("手機Mon貼", "全貼合鋼化玻璃保護貼", "physical", 0, 0.20, "#34c759", "📱"),
+            ("維修減免 $20", "下次維修費用減免港幣$20", "discount", 20, 0.25, "#5856d6", "🎫"),
+            ("維修減免 $50", "下次維修費用減免港幣$50", "discount", 50, 0.15, "#ff9500", "🎫"),
+            ("維修減免 $80", "下次維修費用減免港幣$80", "discount", 80, 0.05, "#ff3b30", "🎫"),
+            ("謝謝參與", "感謝您的支持，下次再試！", "empty", 0, 0.15, "#aeaeb2", "🙏"),
         ]
         for row in default_prizes:
             c.execute(
-                "INSERT INTO lucky_draw_prizes (name, prize_type, probability) VALUES (?,?,?)",
+                "INSERT INTO lucky_draw_prizes (name, description, prize_type, discount_amount, probability, color, emoji) VALUES (?,?,?,?,?,?,?)",
                 row
             )
     
