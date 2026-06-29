@@ -167,8 +167,10 @@ def init_db():
         repair_order_no TEXT NOT NULL,
         customer_name TEXT,
         customer_phone TEXT,
+        prize_id INTEGER,
         prize_name TEXT,
         prize_type TEXT,
+        coupon_code TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -884,13 +886,13 @@ def spin_lucky_draw(data: dict):
         db.close()
         return {"success": False, "message": "獎品設定錯誤"}
 
-    # 根據概率抽獎
-    total = sum(p["probability"] for p in prizes)
-    rand = random.randint(1, total)
+    # 根據概率抽獎（probability 為小數，乘以100轉整數）
+    total = int(sum(p["probability"] for p in prizes) * 100)
+    rand = random.randint(1, max(total, 1))
     cumulative = 0
     winner = None
     for prize in prizes:
-        cumulative += prize["probability"]
+        cumulative += int(prize["probability"] * 100)
         if rand <= cumulative:
             winner = prize
             break
