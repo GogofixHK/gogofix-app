@@ -11,5 +11,10 @@ COPY gogofix_api.py .
 COPY templates/ templates/
 COPY static/ static/
 
-# Use ENTRYPOINT with shell form for proper env var expansion
-ENTRYPOINT python3 -m uvicorn gogofix_api:app --host 0.0.0.0 --port $PORT
+# Use a startup script to debug
+RUN echo '#!/bin/bash' > /start.sh && \
+    echo 'echo "PORT=$PORT"' >> /start.sh && \
+    echo 'exec python3 -m uvicorn gogofix_api:app --host 0.0.0.0 --port ${PORT:-8000}' >> /start.sh && \
+    chmod +x /start.sh
+
+CMD ["/start.sh"]
