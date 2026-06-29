@@ -1,8 +1,8 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "pip install -r requirements.txt"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "python3 -m uvicorn gogofix_api:app --host 0.0.0.0 --port $PORT"
+startCommand = ""
 healthcheckPath = "/api/health"
 restartPolicyType = "always"
