@@ -719,17 +719,39 @@
 <!-- ==================== 首頁 ==================== -->
 <div class="page active" id="page-home">
   <div class="hero">
-    <div class="hero-logo" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; position:relative; z-index:1;">
-      <svg width="180" height="58" viewBox="0 0 200 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text x="100" y="38" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="900" letter-spacing="-1.5" fill="#ffffff">GOGOFIX</text>
-        <text x="100" y="54" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans TC', 'Microsoft YaHei', sans-serif" font-size="11" font-weight="600" letter-spacing="0.5" fill="rgba(255,255,255,0.7)">手機維修專門店</text>
+    <div class="hero-logo" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px; position:relative; z-index:1;">
+      <svg width="260" height="80" viewBox="0 0 260 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <text x="130" y="48" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif" font-size="52" font-weight="900" letter-spacing="-2" fill="#ffffff">GOGOFIX</text>
+        <text x="130" y="72" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans TC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="rgba(255,255,255,0.75)">手機維修專門店</text>
       </svg>
     </div>
     <div class="hero-badge">🔥 專業維修 · 誠信經營</div>
-    <h1>GoGofix</h1>
-    <p>手機維修專門店 · 深水埗福華街123號</p>
+    <p style="font-size:14px; opacity:0.8; position:relative; z-index:1; margin-top:8px;">手機維修專門店 · 深水埗福華街123號</p>
   </div>
-  
+
+  <!-- 滑動廣告 -->
+  <div class="ad-slider" id="ad-slider" style="position:relative; overflow:hidden; border-radius:var(--radius-lg); margin-bottom:20px; box-shadow:var(--shadow-md);">
+    <div class="ad-track" id="ad-track" style="display:flex; transition:transform 0.5s cubic-bezier(0.25,0.1,0.25,1);">
+      <div class="ad-slide" style="min-width:100%; background:linear-gradient(135deg, #007aff, #0062cc); color:white; padding:24px 20px; text-align:center;">
+        <div style="font-size:22px; font-weight:900; margin-bottom:6px;">🎮 Switch Lite 現貨</div>
+        <div style="font-size:14px; opacity:0.9;">5色可選 · HK$840 · 95成新</div>
+      </div>
+      <div class="ad-slide" style="min-width:100%; background:linear-gradient(135deg, #34c759, #28a745); color:white; padding:24px 20px; text-align:center;">
+        <div style="font-size:22px; font-weight:900; margin-bottom:6px;">📱 專業手機維修</div>
+        <div style="font-size:14px; opacity:0.9;">屏幕 · 電池 · 主板 · 現場快修</div>
+      </div>
+      <div class="ad-slide" style="min-width:100%; background:linear-gradient(135deg, #ff9500, #e67e22); color:white; padding:24px 20px; text-align:center;">
+        <div style="font-size:22px; font-weight:900; margin-bottom:6px;">♻️ 手機高價回收</div>
+        <div style="font-size:14px; opacity:0.9;">即時報價 · 多品牌 · 高於市價</div>
+      </div>
+      <div class="ad-slide" style="min-width:100%; background:linear-gradient(135deg, #5856d6, #af52de); color:white; padding:24px 20px; text-align:center;">
+        <div style="font-size:22px; font-weight:900; margin-bottom:6px;">🎉 維修後抽獎</div>
+        <div style="font-size:14px; opacity:0.9;">折扣優惠 · 免費配件 · 驚喜不斷</div>
+      </div>
+    </div>
+    <div class="ad-dots" id="ad-dots" style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:2;"></div>
+  </div>
+
   <div class="func-grid">
     <div class="func-card" onclick="switchPage('shop')">
       <div class="func-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#e8f0fe"/><path d="M10 12h12l-2 8H12l-2-8z" stroke="#007aff" stroke-width="1.5"/><circle cx="12" cy="16" r="1.5" fill="#007aff"/><circle cx="18" cy="16" r="1.5" fill="#007aff"/><path d="M11 20h10" stroke="#007aff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
@@ -1146,11 +1168,16 @@ async function loadServices() {
 
   try {
     const res = await fetch(API + '/api/services');
-    const services = await res.json();
+    let services = await res.json();
 
     if (services.length === 0) {
       el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">暫無維修項目</div></div>';
       return;
+    }
+
+    // 按設備類型篩選
+    if (currentServiceFilter) {
+      services = services.filter(s => (s.device_type || '手機') === currentServiceFilter);
     }
 
     let html = '';
@@ -1189,6 +1216,16 @@ async function loadServices() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">載入失敗，請稍後重試</div></div>';
   }
 }
+
+// 維修項目篩選
+let currentServiceFilter = '';
+function filterServiceType(el, type) {
+  document.querySelectorAll('#service-type-select .color-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  currentServiceFilter = type;
+  loadServices();
+}
+
 let selectedPayment = 'alipay';
 
 // 各品牌手機型號資料
@@ -2097,10 +2134,51 @@ function switchPage(page) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ============ 滑動廣告 ============
+let adIndex = 0;
+let adTimer = null;
+function initAdSlider() {
+  const track = document.getElementById('ad-track');
+  const dotsContainer = document.getElementById('ad-dots');
+  if (!track || !dotsContainer) return;
+  const slides = track.querySelectorAll('.ad-slide');
+  const total = slides.length;
+
+  // 生成圓點
+  dotsContainer.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.style.cssText = 'width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); cursor:pointer; transition:all 0.3s;';
+    dot.onclick = () => { adIndex = i; updateAdSlider(); resetAdTimer(); };
+    dotsContainer.appendChild(dot);
+  }
+
+  function updateAdSlider() {
+    track.style.transform = `translateX(-${adIndex * 100}%)`;
+    dotsContainer.querySelectorAll('div').forEach((d, i) => {
+      d.style.background = i === adIndex ? 'white' : 'rgba(255,255,255,0.4)';
+      d.style.width = i === adIndex ? '18px' : '6px';
+    });
+  }
+  window.updateAdSlider = updateAdSlider;
+
+  function nextAd() {
+    adIndex = (adIndex + 1) % total;
+    updateAdSlider();
+  }
+  function resetAdTimer() {
+    if (adTimer) clearInterval(adTimer);
+    adTimer = setInterval(nextAd, 3500);
+  }
+  resetAdTimer();
+}
+
 // ============ 初始化 ============
 function initApp() {
   loadProducts();
   loadServices();
+  loadRecyclePrices();
+  initAdSlider();
   switchPage('home');
 }
 
@@ -2109,8 +2187,6 @@ if (document.readyState === 'loading') {
 } else {
   initApp();
 }
-// 預設顯示首頁
-setTimeout(() => switchPage('home'), 100);
 </script>
 
 </body>
