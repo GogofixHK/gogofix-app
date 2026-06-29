@@ -1,0 +1,11 @@
+# GoGofix 回收價格定時更新
+# 部署後執行：crontab /workspace/gogofix_app/gogofix_cron.txt
+
+# 每天早上 9:00 更新
+0 9 * * * /bin/bash /workspace/gogofix_app/update_prices.sh
+
+# 每天中午 13:00 更新
+0 13 * * * /bin/bash /workspace/gogofix_app/update_prices.sh
+
+# 每天晚上 20:00 更新
+0 20 * * * /bin/bash /workspace/gogofix_app/update_prices.sh
