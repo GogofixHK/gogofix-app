@@ -11,5 +11,5 @@ COPY gogofix_api.py .
 COPY templates/ templates/
 COPY static/ static/
 
-# Run with uvicorn
-CMD ["python3", "-m", "uvicorn", "gogofix_api:app", "--host", "0.0.0.0", "--port", "8000"]
+# Railway injects PORT env var at runtime
+CMD sh -c "python3 -m uvicorn gogofix_api:app --host 0.0.0.0 --port ${PORT:-8000}"
