@@ -239,6 +239,91 @@
 </head>
 <body>
 
+<!-- 後台登入頁 -->
+<div id="admin-login-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg,#1a1a2e,#16213e); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:rgba(255,255,255,0.05); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:40px 36px; width:90%; max-width:380px; text-align:center;">
+    <div style="font-size:48px; margin-bottom:12px;">🔐</div>
+    <h1 style="color:#fff; font-size:22px; font-weight:800; margin-bottom:6px; letter-spacing:-0.5px;">GoGofix 管理後台</h1>
+    <div style="color:rgba(255,255,255,0.5); font-size:13px; margin-bottom:28px;">請輸入管理密碼登入</div>
+    <input type="password" id="admin-password-input" placeholder="管理密碼" style="width:100%; padding:14px 16px; border:1px solid rgba(255,255,255,0.15); border-radius:12px; background:rgba(255,255,255,0.08); color:#fff; font-size:16px; margin-bottom:16px; outline:none; font-family:inherit;" onkeydown="if(event.key==='Enter') doAdminLogin()">
+    <div id="admin-login-error" style="color:#ff6b6b; font-size:13px; margin-bottom:12px; display:none;">密碼錯誤，請重試</div>
+    <button onclick="doAdminLogin()" style="width:100%; padding:14px; border:none; border-radius:12px; background:linear-gradient(135deg,#007aff,#5856d6); color:#fff; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit;">登入</button>
+  </div>
+</div>
+
+<script>
+let adminToken = localStorage.getItem('gogofix_admin_token') || '';
+
+// 檢查登入狀態
+async function checkAdminAuth() {
+  if (!adminToken) {
+    showAdminLogin();
+    return false;
+  }
+  try {
+    const res = await fetch('/api/admin/verify', { headers: { 'Authorization': 'Bearer ' + adminToken } });
+    const data = await res.json();
+    if (data.valid) {
+      hideAdminLogin();
+      return true;
+    } else {
+      showAdminLogin();
+      return false;
+    }
+  } catch(e) {
+    showAdminLogin();
+    return false;
+  }
+}
+
+function showAdminLogin() {
+  document.getElementById('admin-login-overlay').style.display = 'flex';
+}
+
+function hideAdminLogin() {
+  document.getElementById('admin-login-overlay').style.display = 'none';
+}
+
+async function doAdminLogin() {
+  const pwd = document.getElementById('admin-password-input').value.trim();
+  if (!pwd) return;
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+    const data = await res.json();
+    if (data.success) {
+      adminToken = data.token;
+      localStorage.setItem('gogofix_admin_token', adminToken);
+      document.getElementById('admin-login-error').style.display = 'none';
+      hideAdminLogin();
+      loadDashboard();
+    } else {
+      document.getElementById('admin-login-error').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('admin-login-error').textContent = '網絡錯誤';
+    document.getElementById('admin-login-error').style.display = 'block';
+  }
+}
+
+// 包裝 fetch，自動加 token
+function adminFetch(url, options = {}) {
+  options.headers = options.headers || {};
+  options.headers['Authorization'] = 'Bearer ' + adminToken;
+  return fetch(url, options);
+}
+
+// 登出
+function adminLogout() {
+  adminToken = '';
+  localStorage.removeItem('gogofix_admin_token');
+  showAdminLogin();
+}
+</script>
+
 <!-- 側邊欄 -->
 <div class="sidebar">
   <div class="sidebar-logo">
@@ -273,6 +358,9 @@
   </div>
   <div class="menu-item" onclick="window.open('/','_blank')">
     <span class="menu-icon">🌐</span> 查看前台
+  </div>
+  <div class="menu-item" onclick="adminLogout()" style="color:#ff6b6b;">
+    <span class="menu-icon">🚪</span> 登出
   </div>
 </div>
 
@@ -450,7 +538,7 @@ function switchAdminPage(page) {
 // ============ 維修訂單管理 ============
 async function loadServiceOrdersAdmin() {
   try {
-    const res = await fetch('/api/admin/service-orders');
+    const res = await adminFetch('/api/admin/service-orders');
     const orders = await res.json();
     const tbody = document.getElementById('service-orders-tbody');
     if (!orders || orders.length === 0) {
@@ -491,7 +579,7 @@ async function loadServiceOrdersAdmin() {
     }).join('');
     // 標記所有為已讀
     orders.filter(o => o.is_read == 0).forEach(o => {
-      fetch(`/api/admin/service-orders/${o.id}/read`, {method:'PUT'});
+      adminFetch(`/api/admin/service-orders/${o.id}/read`, {method:'PUT'});
     });
   } catch(e) {
     console.error('載入維修訂單失敗', e);
@@ -500,14 +588,14 @@ async function loadServiceOrdersAdmin() {
 
 async function updateOrderStatus(id, status) {
   if (!status) return;
-  await fetch(`/api/admin/service-orders/${id}/status`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  await adminFetch(`/api/admin/service-orders/${id}/status`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
   showToast('狀態已更新');
   loadServiceOrdersAdmin();
 }
 
 async function updateOrderPayment(id, payment_status) {
   if (!payment_status) return;
-  await fetch(`/api/admin/service-orders/${id}/payment`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({payment_status})});
+  await adminFetch(`/api/admin/service-orders/${id}/payment`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({payment_status})});
   showToast('付款狀態已更新');
   loadServiceOrdersAdmin();
 }
@@ -516,7 +604,7 @@ async function updateOrderPayment(id, payment_status) {
 let lastOrderCount = 0;
 async function pollNewOrders() {
   try {
-    const res = await fetch('/api/admin/service-orders/new');
+    const res = await adminFetch('/api/admin/service-orders/new');
     const newOrders = await res.json();
     if (newOrders.length > lastOrderCount && lastOrderCount > 0) {
       // 有新訂單！
@@ -566,12 +654,12 @@ async function loadDashboard() {
   try {
     const [products, orders, repairs, messages, recyclePrices, updateLog, serviceOrders] = await Promise.all([
       fetch('/api/products').then(r=>r.json()),
-      fetch('/api/admin/orders').then(r=>r.json()),
-      fetch('/api/admin/repairs').then(r=>r.json()),
+      adminFetch('/api/admin/orders').then(r=>r.json()),
+      adminFetch('/api/admin/repairs').then(r=>r.json()),
       fetch('/api/messages').then(r=>r.json()),
       fetch('/api/recycle/prices?brand=Apple').then(r=>r.json()),
       fetch('/api/recycle/update-log').then(r=>r.json()),
-      fetch('/api/admin/service-orders').then(r=>r.json()),
+      adminFetch('/api/admin/service-orders').then(r=>r.json()),
     ]);
     
     const totalStock = products.reduce((s,p) => s + p.stock, 0);
@@ -687,7 +775,7 @@ async function submitNewProduct() {
   
   try {
     // 直接寫入數據庫（簡化：用後端API）
-    const res = await fetch('/api/admin/products/add', {
+    const res = await adminFetch('/api/admin/products/add', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({name, category, color, price, stock})
@@ -703,7 +791,7 @@ async function submitNewProduct() {
 // ============ 訂單管理 ============
 async function loadOrdersAdmin() {
   try {
-    const orders = await fetch('/api/admin/orders').then(r=>r.json());
+    const orders = await adminFetch('/api/admin/orders').then(r=>r.json());
     let html = '';
     orders.forEach(o => {
       html += `<tr>
@@ -724,7 +812,7 @@ async function loadOrdersAdmin() {
 // ============ 維修工單 ============
 async function loadRepairsAdmin() {
   try {
-    const repairs = await fetch('/api/admin/repairs').then(r=>r.json());
+    const repairs = await adminFetch('/api/admin/repairs').then(r=>r.json());
     let html = '';
     repairs.forEach(r => {
       html += `<tr>
@@ -814,7 +902,7 @@ function showAddService() {
   const priceMax = parseInt(prompt('最高價格（HK$）：') || '0');
   const desc = prompt('項目描述：') || '';
   
-  fetch('/api/admin/repair-services/add', {
+  adminFetch('/api/admin/repair-services/add', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({name, device_type: deviceType, price_min: priceMin, price_max: priceMax, description: desc})
@@ -825,9 +913,14 @@ function showAddService() {
 }
 
 // ============ 初始化 ============
-loadDashboard();
-setInterval(loadDashboard, 30000); // 每30秒自動更新
-setInterval(pollNewOrders, 10000); // 每10秒檢查新訂單
+(async function() {
+  const authed = await checkAdminAuth();
+  if (authed) {
+    loadDashboard();
+    setInterval(loadDashboard, 30000);
+    setInterval(pollNewOrders, 10000);
+  }
+})();
 </script>
 </body>
 </html>

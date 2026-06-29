@@ -198,6 +198,15 @@ def init_db():
     member_cols = [r[1] for r in c.execute("PRAGMA table_info(members)").fetchall()]
     if 'password' not in member_cols:
         c.execute("ALTER TABLE members ADD COLUMN password TEXT DEFAULT ''")
+
+    # 後台登入 session 表
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS admin_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        token TEXT UNIQUE NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
     
     # 抽獎獎品表
     c.execute("""
@@ -555,7 +564,8 @@ def get_messages(phone: str = ""):
 
 # --- 後台管理 API ---
 @app.get("/api/admin/orders")
-def admin_get_orders():
+def admin_get_orders(request: Request):
+    require_admin(request)
     """後台查看所有訂單"""
     db = get_db()
     rows = db.execute("""
@@ -567,7 +577,8 @@ def admin_get_orders():
     return [dict(r) for r in rows]
 
 @app.get("/api/admin/repairs")
-def admin_get_repairs():
+def admin_get_repairs(request: Request):
+    require_admin(request)
     """後台查看所有維修工單"""
     db = get_db()
     rows = db.execute("SELECT * FROM repairs ORDER BY id DESC LIMIT 100").fetchall()
@@ -578,6 +589,51 @@ def admin_get_repairs():
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "shop": "GoGofix 手機維修專門店"}
+
+# ============ 後台認證 ============
+import secrets as _secrets
+
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "gogofix2024")
+
+def verify_admin_token(token: str) -> bool:
+    """驗證 admin session token"""
+    if not token:
+        return False
+    db = get_db()
+    row = db.execute("SELECT id FROM admin_sessions WHERE token=?", (token,)).fetchone()
+    db.close()
+    return row is not None
+
+def require_admin(request: Request):
+    """從 request header 提取並驗證 admin token"""
+    auth = request.headers.get("Authorization", "")
+    token = ""
+    if auth.startswith("Bearer "):
+        token = auth[7:]
+    if not verify_admin_token(token):
+        raise HTTPException(status_code=401, detail="未授權，請先登入")
+    return token
+
+@app.post("/api/admin/login")
+def admin_login(data: dict):
+    """後台登入"""
+    password = data.get("password", "")
+    if password != ADMIN_PASSWORD:
+        return {"success": False, "message": "密碼錯誤"}
+    token = _secrets.token_hex(16)
+    db = get_db()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    db.execute("INSERT INTO admin_sessions (token, created_at) VALUES (?,?)", (token, now))
+    db.commit()
+    db.close()
+    return {"success": True, "token": token}
+
+@app.get("/api/admin/verify")
+def admin_verify(request: Request):
+    """驗證 token 是否有效"""
+    auth = request.headers.get("Authorization", "")
+    token = auth[7:] if auth.startswith("Bearer ") else ""
+    return {"valid": verify_admin_token(token)}
 
 # ============ 掛載靜態檔案 ============
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
@@ -605,7 +661,8 @@ class ProductAdd(BaseModel):
     description: str = ""
 
 @app.post("/api/admin/products/add")
-def add_product(p: ProductAdd):
+def add_product(p: ProductAdd, request: Request):
+    require_admin(request)
     db = get_db()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.execute(
@@ -622,7 +679,8 @@ class RepairQuote(BaseModel):
     note: str = ""
 
 @app.put("/api/admin/repairs/{repair_id}/quote")
-def update_repair_quote(repair_id: int, data: RepairQuote):
+def update_repair_quote(repair_id: int, data: RepairQuote, request: Request):
+    require_admin(request)
     db = get_db()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.execute(
@@ -843,7 +901,8 @@ def get_repair_services(device_type: str = ""):
     return [dict(r) for r in rows]
 
 @app.post("/api/admin/repair-services/add")
-def add_repair_service(service: dict):
+def add_repair_service(service: dict, request: Request):
+    require_admin(request)
     """後台新增維修項目"""
     db = get_db()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -857,7 +916,8 @@ def add_repair_service(service: dict):
     return {"success": True}
 
 @app.put("/api/admin/repair-services/{service_id}")
-def update_repair_service(service_id: int, service: dict):
+def update_repair_service(service_id: int, service: dict, request: Request):
+    require_admin(request)
     """後台更新維修項目"""
     db = get_db()
     db.execute(
@@ -922,7 +982,8 @@ def create_service_order(order: ServiceOrderCreate):
     }
 
 @app.get("/api/admin/service-orders")
-def get_service_orders():
+def get_service_orders(request: Request):
+    require_admin(request)
     """後台查看維修服務訂單"""
     db = get_db()
     rows = db.execute("SELECT * FROM service_orders ORDER BY id DESC LIMIT 100").fetchall()
@@ -930,7 +991,8 @@ def get_service_orders():
     return [dict(r) for r in rows]
 
 @app.get("/api/admin/service-orders/new")
-def get_new_service_orders():
+def get_new_service_orders(request: Request):
+    require_admin(request)
     """獲取未讀新訂單（輪詢用）"""
     db = get_db()
     rows = db.execute("SELECT * FROM service_orders WHERE is_read=0 ORDER BY id DESC").fetchall()
@@ -938,7 +1000,8 @@ def get_new_service_orders():
     return [dict(r) for r in rows]
 
 @app.put("/api/admin/service-orders/{order_id}/read")
-def mark_order_read(order_id: int):
+def mark_order_read(order_id: int, request: Request):
+    require_admin(request)
     """標記訂單已讀"""
     db = get_db()
     db.execute("UPDATE service_orders SET is_read=1 WHERE id=?", (order_id,))
@@ -947,7 +1010,8 @@ def mark_order_read(order_id: int):
     return {"success": True}
 
 @app.put("/api/admin/service-orders/{order_id}/status")
-def update_order_status(order_id: int, data: dict):
+def update_order_status(order_id: int, data: dict, request: Request):
+    require_admin(request)
     """更新訂單狀態"""
     db = get_db()
     db.execute("UPDATE service_orders SET order_status=? WHERE id=?", (data.get("status", "pending"), order_id))
@@ -956,7 +1020,8 @@ def update_order_status(order_id: int, data: dict):
     return {"success": True}
 
 @app.put("/api/admin/service-orders/{order_id}/payment")
-def update_order_payment(order_id: int, data: dict):
+def update_order_payment(order_id: int, data: dict, request: Request):
+    require_admin(request)
     """更新付款狀態"""
     db = get_db()
     db.execute("UPDATE service_orders SET payment_status=? WHERE id=?", (data.get("payment_status", "unpaid"), order_id))
@@ -1144,7 +1209,8 @@ def check_draw_eligibility(request: Request):
     return {"eligible": True, "message": "可以抽獎！"}
 
 @app.get("/api/admin/lucky-draw/records")
-def get_draw_records():
+def get_draw_records(request: Request):
+    require_admin(request)
     """後台查看抽獎記錄"""
     db = get_db()
     rows = db.execute("SELECT * FROM lucky_draw_records ORDER BY id DESC LIMIT 100").fetchall()
