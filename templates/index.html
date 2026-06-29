@@ -1136,26 +1136,61 @@
     對話
   </div>
 </div>
-          </div>
-        `;
-      });
+<script>
+// API 基礎地址
+const API = window.location.origin;
+
+// 載入維修項目列表
+async function loadServices() {
+  const el = document.getElementById('service-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">載入中...</div>';
+
+  try {
+    const res = await fetch(API + '/api/services');
+    const services = await res.json();
+
+    if (services.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">暫無維修項目</div></div>';
+      return;
     }
-    
+
+    let html = '';
+    const grouped = {};
+    services.forEach(s => {
+      const type = s.device_type || '手機';
+      if (!grouped[type]) grouped[type] = [];
+      grouped[type].push(s);
+    });
+
+    Object.keys(grouped).forEach(type => {
+      html += `<div style="font-size:15px; font-weight:700; margin:16px 0 8px; color:var(--text);">${type}</div>`;
+      grouped[type].forEach(s => {
+        html += `
+        <div style="background:white; border-radius:12px; padding:14px; margin-bottom:10px; box-shadow:var(--shadow-sm);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:14px; font-weight:600;">${s.name}</div>
+            <div style="font-size:14px; font-weight:700; color:var(--accent);">HK$ ${s.price_min}-${s.price_max}</div>
+          </div>
+          <div style="font-size:12px; color:var(--text2); margin-top:4px;">${s.device_type || '手機'} · ${s.estimated_time || '約30分鐘'}</div>
+        </div>`;
+      });
+    });
+
     el.innerHTML = html;
-    
+
     // 同步更新下單彈窗的維修項目選項
     let options = '<option value="">請選擇維修項目</option>';
     services.forEach(s => {
       options += `<option value="${s.id}" data-name="${s.name}" data-min="${s.price_min}" data-max="${s.price_max}">${s.name} (HK$ ${s.price_min}-${s.price_max})</option>`;
     });
-    document.getElementById('so-service').innerHTML = options;
-    
+    const soServiceEl = document.getElementById('so-service');
+    if (soServiceEl) soServiceEl.innerHTML = options;
+
   } catch(e) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">載入失敗</div></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">載入失敗，請稍後重試</div></div>';
   }
 }
-
-<script>
 let selectedPayment = 'alipay';
 
 // 各品牌手機型號資料
@@ -2067,6 +2102,7 @@ function switchPage(page) {
 // ============ 初始化 ============
 function initApp() {
   loadProducts();
+  loadServices();
   switchPage('home');
 }
 
