@@ -941,17 +941,27 @@
 <div class="modal-overlay" id="service-order-modal">
   <div class="modal">
     <div class="modal-title">
-      <span>📱 預約維修服務</span>
+      <span>📱 維修落單</span>
       <button class="modal-close" onclick="closeServiceOrderModal()">✕</button>
     </div>
-    
+
+    <!-- 會員快速登入 -->
+    <div id="so-member-login" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9); border-radius:12px; padding:14px; margin-bottom:16px;">
+      <div style="font-size:13px; font-weight:700; color:#2e7d32; margin-bottom:8px;">👤 會員快速登入（選填）</div>
+      <div style="display:flex; gap:8px;">
+        <input type="tel" class="form-input" id="so-member-phone" placeholder="輸入電話號碼" style="flex:1; margin:0;">
+        <button onclick="memberQuickLogin()" style="background:var(--green); color:white; border:none; padding:0 16px; border-radius:12px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">登入</button>
+      </div>
+      <div id="so-member-info" style="display:none; margin-top:8px; font-size:12px; color:#2e7d32;"></div>
+    </div>
+
     <div class="form-group">
-      <label class="form-label">維修項目</label>
+      <label class="form-label">維修項目 *</label>
       <select class="form-input" id="so-service" onchange="updateServicePrice()">
         <option value="">請選擇維修項目</option>
       </select>
     </div>
-    
+
     <div class="form-group">
       <label class="form-label">設備品牌</label>
       <select class="form-input" id="so-brand" onchange="updateDeviceModels()">
@@ -970,29 +980,34 @@
         <option value="other">其他品牌</option>
       </select>
     </div>
-    
+
     <div class="form-group">
       <label class="form-label">設備型號</label>
       <select class="form-input" id="so-model">
         <option value="">請先選擇品牌</option>
       </select>
     </div>
-    
+
     <div class="form-group" id="so-other-device-group" style="display:none;">
       <label class="form-label">手動輸入型號</label>
       <input type="text" class="form-input" id="so-device-other" placeholder="請輸入品牌及型號">
     </div>
-    
+
     <div class="form-group">
       <label class="form-label">問題描述</label>
       <input type="text" class="form-input" id="so-issue" placeholder="例如：螢幕碎裂、無法觸控">
     </div>
-    
+
     <div class="form-group">
       <label class="form-label">預估價格</label>
       <div style="font-size:22px; font-weight:800; color:var(--accent);" id="so-price">HK$ --</div>
     </div>
-    
+
+    <div class="form-group">
+      <label class="form-label">期望維修時間 *</label>
+      <input type="datetime-local" class="form-input" id="so-preferred-time" style="font-size:15px;">
+    </div>
+
     <div class="form-group">
       <label class="form-label">付款方式</label>
       <div class="color-select" id="payment-methods">
@@ -1002,31 +1017,42 @@
         <div class="color-option" onclick="selectPayment(this, 'cash')">💵 現金</div>
       </div>
     </div>
-    
+
     <div class="form-group">
       <label class="form-label">您的姓名 *</label>
       <input type="text" class="form-input" id="so-name" placeholder="請輸入姓名">
     </div>
-    
+
     <div class="form-group">
       <label class="form-label">聯絡電話 *</label>
-      <input type="text" class="form-input" id="so-phone" placeholder="請輸入電話">
+      <input type="tel" class="form-input" id="so-phone" placeholder="請輸入電話">
     </div>
-    
+
     <div class="form-group">
       <label class="form-label">電郵（選填）</label>
-      <input type="text" class="form-input" id="so-email" placeholder="example@email.com">
+      <input type="email" class="form-input" id="so-email" placeholder="example@email.com">
     </div>
-    
+
     <div class="form-group">
       <label class="form-label">備註</label>
       <input type="text" class="form-input" id="so-note" placeholder="例如：希望週末到店">
     </div>
-    
-    <button class="btn-primary" onclick="submitServiceOrder()">確認預約 🔒</button>
+
+    <button class="btn-primary" onclick="submitServiceOrder()" style="background:linear-gradient(135deg,#34c759,#28a745);">確認落單 🔒</button>
     <div style="text-align:center; margin-top:10px; font-size:12px; color:var(--text3);">
-      📱 提交後我們會 WhatsApp 即時確認
+      📱 提交後可線上付款，我們會 WhatsApp 即時確認
     </div>
+  </div>
+</div>
+
+<!-- ==================== 付款 QR 碼彈窗 ==================== -->
+<div class="modal-overlay" id="payment-qr-modal" style="z-index:250;">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-title">
+      <span>💳 線上付款</span>
+      <button class="modal-close" onclick="closePaymentQR()">✕</button>
+    </div>
+    <div id="payment-qr-content" style="padding:10px 0;"></div>
   </div>
 </div>
 
@@ -1197,6 +1223,38 @@
   </div>
 </div>
 
+<!-- ==================== 會員訂單頁面 ==================== -->
+<div class="page" id="page-account">
+  <h2 style="font-size:18px; font-weight:900; margin-bottom:16px;">👤 我的帳戶</h2>
+
+  <!-- 會員登入區 -->
+  <div id="account-login-area" style="background:var(--card-solid); border-radius:var(--radius-md); padding:20px; box-shadow:var(--shadow-sm); margin-bottom:16px;">
+    <div style="font-size:15px; font-weight:700; margin-bottom:14px;">🔑 會員登入</div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <input type="tel" class="form-input" id="account-phone" placeholder="請輸入電話號碼" style="font-size:16px;">
+    </div>
+    <button class="btn-primary" onclick="accountLogin()" style="background:linear-gradient(135deg,#34c759,#28a745);">登入 / 註冊</button>
+    <div style="font-size:12px; color:var(--text3); margin-top:10px; text-align:center;">用手機號碼即可登入，自動記錄您的維修訂單</div>
+  </div>
+
+  <!-- 會員資訊+訂單列表（登入後顯示） -->
+  <div id="account-info-area" style="display:none;">
+    <div style="background:linear-gradient(135deg,#34c759,#28a745); border-radius:var(--radius-md); padding:20px; margin-bottom:16px; color:white;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:48px; height:48px; background:rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px;">👤</div>
+        <div style="flex:1;">
+          <div id="account-name" style="font-size:18px; font-weight:800;"></div>
+          <div id="account-phone-display" style="font-size:13px; opacity:0.9;"></div>
+        </div>
+        <button onclick="accountLogout()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:6px 12px; border-radius:8px; font-size:12px; cursor:pointer;">登出</button>
+      </div>
+    </div>
+
+    <div style="font-size:15px; font-weight:700; margin-bottom:10px;">📋 我的維修訂單</div>
+    <div id="account-orders" style="margin-bottom:20px;"></div>
+  </div>
+</div>
+
 <!-- ==================== 在線對話頁面 ==================== -->
 <div class="page" id="page-chat">
   <div style="font-size:18px; font-weight:900; margin-bottom:10px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> 在線咨詢</div>
@@ -1284,6 +1342,10 @@
   <div class="bottom-nav-item" onclick="switchPage('chat')">
     <div class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11a8 8 0 01-8 8c-.9 0-1.8-.2-2.6-.5L3 20l1.5-5.4A7.9 7.9 0 013 11a8 8 0 018-8 8 8 0 018 8z"/></svg></div>
     對話
+  </div>
+  <div class="bottom-nav-item" onclick="switchPage('account')">
+    <div class="bottom-nav-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="8" r="4"/><path d="M3 20a8 8 0 0116 0"/></svg></div>
+    我的
   </div>
 </div>
 <script>
@@ -1480,10 +1542,53 @@ function updateServicePrice() {
 
 function openServiceOrderModal() {
   document.getElementById('service-order-modal').classList.add('show');
+  // 設定預設時間為明天下午
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(14, 0, 0, 0);
+  const tzOffset = tomorrow.getTimezoneOffset() * 60000;
+  const localISO = new Date(tomorrow - tzOffset).toISOString().slice(0, 16);
+  const timeEl = document.getElementById('so-preferred-time');
+  if (timeEl && !timeEl.value) timeEl.value = localISO;
 }
 
 function closeServiceOrderModal() {
   document.getElementById('service-order-modal').classList.remove('show');
+}
+
+function closePaymentQR() {
+  document.getElementById('payment-qr-modal').classList.remove('show');
+}
+
+// 會員快速登入
+let currentMemberId = 0;
+async function memberQuickLogin() {
+  const phone = document.getElementById('so-member-phone').value.trim();
+  if (!phone) { showToast('請輸入電話號碼'); return; }
+
+  try {
+    const res = await fetch(API + '/api/members/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ phone: phone })
+    });
+    const data = await res.json();
+    if (data.success) {
+      currentMemberId = data.member.id;
+      // 自動帶入資料
+      if (data.member.name) document.getElementById('so-name').value = data.member.name;
+      if (data.member.email) document.getElementById('so-email').value = data.member.email;
+      document.getElementById('so-phone').value = phone;
+      const infoEl = document.getElementById('so-member-info');
+      infoEl.style.display = 'block';
+      infoEl.innerHTML = `✅ 歡迎回來，<strong>${data.member.name || '會員'}</strong>！${data.orders.length > 0 ? `您有 ${data.orders.length} 筆歷史訂單。` : ''}`;
+      showToast('會員登入成功');
+    } else {
+      showToast(data.message || '登入失敗');
+    }
+  } catch(e) {
+    showToast('網絡錯誤');
+  }
 }
 
 async function submitServiceOrder() {
@@ -1492,12 +1597,17 @@ async function submitServiceOrder() {
   const sel = document.getElementById('so-service');
   const serviceId = sel.value;
   const serviceName = sel.options[sel.selectedIndex]?.dataset.name || '';
-  
+  const preferredTime = document.getElementById('so-preferred-time').value;
+
   if (!name || !phone || !serviceId) {
     showToast('請填寫姓名、電話和選擇維修項目');
     return;
   }
-  
+  if (!preferredTime) {
+    showToast('請選擇期望維修時間');
+    return;
+  }
+
   const brand = document.getElementById('so-brand').value.trim();
   const model = document.getElementById('so-model').value.trim();
   const deviceOther = document.getElementById('so-device-other').value.trim();
@@ -1506,7 +1616,7 @@ async function submitServiceOrder() {
   const email = document.getElementById('so-email').value.trim();
   const note = document.getElementById('so-note').value.trim();
   const priceMin = parseInt(sel.options[sel.selectedIndex]?.dataset.min) || 0;
-  
+
   try {
     const res = await fetch(API + '/api/service-orders', {
       method: 'POST',
@@ -1515,40 +1625,48 @@ async function submitServiceOrder() {
         customer_name: name,
         customer_phone: phone,
         customer_email: email,
+        member_id: currentMemberId,
         device_type: brand,
         device_model: model || deviceOther,
         service_id: parseInt(serviceId),
         service_name: serviceName,
         issue_description: issue,
         estimated_price: priceMin,
+        preferred_time: preferredTime,
         payment_method: selectedPayment,
         note: note
       })
     });
-    
+
     const data = await res.json();
     if (data.success) {
       const payLabel = {'alipay':'支付寶','fps':'轉數快','octopus':'八達通','cash':'現金'};
-      
+      const timeStr = new Date(preferredTime).toLocaleString('zh-HK', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+
       // WhatsApp 通知老闆
-      const waMsg = `🔧 *新維修訂單！*\n\n📋 訂單號：${data.order_no}\n👤 客戶：${name}\n📱 電話：${phone}\n🔧 項目：${serviceName}\n📱 設備：${device || '未填'}\n⚠️ 問題：${issue || '未填'}\n💰 預估：HK$${priceMin}\n💳 付款：${payLabel[selectedPayment]}\n📝 備註：${note || '無'}`;
+      const waMsg = `🔧 *新維修訂單！*\n\n📋 訂單號：${data.order_no}\n👤 客戶：${name}\n📱 電話：${phone}\n🔧 項目：${serviceName}\n📱 設備：${device || '未填'}\n⚠️ 問題：${issue || '未填'}\n💰 預估：HK$${priceMin}\n🕐 時間：${timeStr}\n💳 付款：${payLabel[selectedPayment]}\n📝 備註：${note || '無'}`;
       window.open(`https://wa.me/85252382777?text=${encodeURIComponent(waMsg)}`, '_blank');
-      
-      showToast('✅ 預約成功！');
+
+      showToast('✅ 落單成功！');
       closeServiceOrderModal();
+
+      // 顯示付款 QR 碼（非現金）
+      if (selectedPayment !== 'cash') {
+        showPaymentQR(data.order_no, selectedPayment, priceMin, serviceName, timeStr);
+      }
+
       // 彈出抽獎機會
       setTimeout(() => {
-        if (confirm('🎉 恭喜！您獲得一次免費抽獎機會！\n\n是否立即抽獎？')) {
+        if (selectedPayment === 'cash' && confirm('🎉 恭喜！您獲得一次免費抽獎機會！\n\n是否立即抽獎？')) {
           luckyOrderNo = data.order_no;
           luckyCustomerName = name;
           luckyCustomerPhone = phone;
-          const welcomeEl = document.getElementById('lucky-welcome');
-          if (welcomeEl) welcomeEl.textContent = '🎉 ' + name + ' 您好！感謝您的預約，請翻牌抽獎！';
           switchPage('lucky');
         }
       }, 500);
+
       // 重置表單
-      ['so-name','so-phone','so-email','so-issue','so-note','so-device-other'].forEach(id => {
+      ['so-name','so-phone','so-email','so-issue','so-note','so-device-other','so-preferred-time','so-member-phone'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -1558,11 +1676,143 @@ async function submitServiceOrder() {
       document.getElementById('so-price').textContent = 'HK$ --';
       document.getElementById('so-other-device-group').style.display = 'none';
       document.getElementById('so-model').parentElement.style.display = 'block';
+      document.getElementById('so-member-info').style.display = 'none';
+      currentMemberId = 0;
     } else {
-      showToast('預約失敗，請稍後再試');
+      showToast('落單失敗，請稍後再試');
     }
   } catch(e) {
     showToast('網絡錯誤，請稍後再試');
+  }
+}
+
+// 顯示付款 QR 碼
+function showPaymentQR(orderNo, method, price, serviceName, timeStr) {
+  const payLabel = {'alipay':'支付寶','fps':'轉數快','octopus':'八達通'};
+  const payColor = {'alipay':'#1677ff','fps':'#00b14f','octopus':'#e6582a'};
+  const payId = {'alipay':'GoGofixHK','fps':'85252382777','octopus':''};
+
+  const content = document.getElementById('payment-qr-content');
+  content.innerHTML = `
+    <div style="background:linear-gradient(135deg,${payColor[method]},${payColor[method]}dd); border-radius:16px; padding:24px; margin-bottom:16px;">
+      <div style="font-size:32px; margin-bottom:8px;">${method==='alipay'?'💙':method==='fps'?'🔄':'🟠'}</div>
+      <div style="font-size:18px; font-weight:800; color:white;">${payLabel[method]} 付款</div>
+      <div style="font-size:28px; font-weight:900; color:white; margin:8px 0;">HK$ ${price}</div>
+    </div>
+    <div style="background:#f2f2f7; border-radius:16px; padding:20px; margin-bottom:16px;">
+      <div style="font-size:13px; color:var(--text2); margin-bottom:4px;">訂單號</div>
+      <div style="font-size:16px; font-weight:700; margin-bottom:12px;">${orderNo}</div>
+      <div style="font-size:13px; color:var(--text2); margin-bottom:4px;">維修項目</div>
+      <div style="font-size:14px; font-weight:600; margin-bottom:12px;">${serviceName}</div>
+      <div style="font-size:13px; color:var(--text2); margin-bottom:4px;">預約時間</div>
+      <div style="font-size:14px; font-weight:600; margin-bottom:12px;">${timeStr}</div>
+      <div style="font-size:13px; color:var(--text2); margin-bottom:4px;">${payLabel[method]} ID</div>
+      <div style="font-size:18px; font-weight:800; color:${payColor[method]}; letter-spacing:1px;">${payId[method]}</div>
+    </div>
+    <div style="background:#fff3cd; border:1px solid #ffeaa7; border-radius:12px; padding:14px; margin-bottom:16px; text-align:left;">
+      <div style="font-size:13px; color:#856404; line-height:1.6;">
+        📌 <strong>付款步驟：</strong><br>
+        1. 打開 ${payLabel[method]} App<br>
+        2. 掃描或輸入上方 ID 付款<br>
+        3. 付款完成後請 WhatsApp 通知我們確認
+      </div>
+    </div>
+    <a href="https://wa.me/85252382777?text=${encodeURIComponent(`💳 付款確認\n\n📋 訂單號：${orderNo}\n💰 金額：HK$${price}\n✅ 已透過${payLabel[method]}付款，請確認`)}" target="_blank"
+       style="display:flex; align-items:center; justify-content:center; gap:8px; background:#25d366; color:white; padding:14px; border-radius:12px; text-decoration:none; font-weight:700; font-size:15px; margin-bottom:12px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      WhatsApp 確認付款
+    </a>
+    <button onclick="closePaymentQR(); if(confirm('🎉 您獲得一次免費抽獎機會！是否立即抽獎？')) switchPage('lucky');" style="background:linear-gradient(135deg,#34c759,#28a745); color:white; border:none; padding:14px; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; width:100%; font-family:inherit;">🎉 完成付款，去抽獎</button>
+  `;
+
+  document.getElementById('payment-qr-modal').classList.add('show');
+}
+
+// ============ 會員系統 ============
+let accountMember = null;
+
+async function accountLogin() {
+  const phone = document.getElementById('account-phone').value.trim();
+  if (!phone) { showToast('請輸入電話號碼'); return; }
+
+  try {
+    const res = await fetch(API + '/api/members/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ phone: phone })
+    });
+    const data = await res.json();
+    if (data.success) {
+      accountMember = data.member;
+      localStorage.setItem('gogofix_member_phone', phone);
+      showAccountInfo(data.member, data.orders);
+      showToast('✅ 登入成功');
+    } else {
+      showToast(data.message || '登入失敗');
+    }
+  } catch(e) {
+    showToast('網絡錯誤');
+  }
+}
+
+function accountLogout() {
+  accountMember = null;
+  localStorage.removeItem('gogofix_member_phone');
+  document.getElementById('account-login-area').style.display = 'block';
+  document.getElementById('account-info-area').style.display = 'none';
+  document.getElementById('account-phone').value = '';
+}
+
+function showAccountInfo(member, orders) {
+  document.getElementById('account-login-area').style.display = 'none';
+  document.getElementById('account-info-area').style.display = 'block';
+  document.getElementById('account-name').textContent = member.name || '會員';
+  document.getElementById('account-phone-display').textContent = member.phone;
+
+  const ordersEl = document.getElementById('account-orders');
+  if (!orders || orders.length === 0) {
+    ordersEl.innerHTML = '<div style="text-align:center; color:var(--text3); font-size:13px; padding:20px;">暫無維修訂單</div>';
+    return;
+  }
+
+  const statusMap = {
+    'pending': { label: '待確認', color: '#ff9500' },
+    'confirmed': { label: '已確認', color: '#007aff' },
+    'repairing': { label: '維修中', color: '#5856d6' },
+    'done': { label: '已完成', color: '#34c759' },
+    'cancelled': { label: '已取消', color: '#ff3b30' }
+  };
+  const payMap = {'alipay':'支付寶','fps':'轉數快','octopus':'八達通','cash':'現金','unpaid':'未付款','paid':'已付款'};
+
+  ordersEl.innerHTML = orders.map(o => {
+    const st = statusMap[o.order_status] || statusMap['pending'];
+    const payStatus = o.payment_status === 'paid' ? '已付款' : '未付款';
+    const payStatusColor = o.payment_status === 'paid' ? '#34c759' : '#ff9500';
+    const time = o.preferred_time ? new Date(o.preferred_time).toLocaleString('zh-HK', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '未指定';
+    return `
+      <div style="background:var(--card-solid); border-radius:var(--radius-sm); padding:14px; margin-bottom:10px; box-shadow:var(--shadow-sm); border-left:3px solid ${st.color};">
+        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
+          <div style="font-size:13px; font-weight:700; color:var(--text2);">${o.order_no}</div>
+          <div style="font-size:12px; font-weight:700; color:${st.color}; background:${st.color}15; padding:2px 8px; border-radius:6px;">${st.label}</div>
+        </div>
+        <div style="font-size:14px; font-weight:600; margin-bottom:4px;">${o.service_name || '維修服務'}</div>
+        <div style="font-size:12px; color:var(--text2); margin-bottom:2px;">📱 ${o.device_type || ''} ${o.device_model || ''}</div>
+        <div style="font-size:12px; color:var(--text2); margin-bottom:2px;">🕐 ${time}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+          <div style="font-size:15px; font-weight:800; color:var(--accent);">HK$${o.estimated_price}</div>
+          <div style="font-size:12px; color:${payStatusColor}; font-weight:600;">${payStatus} · ${payMap[o.payment_method]||o.payment_method}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 自動登入（localStorage）
+function autoLoginMember() {
+  const savedPhone = localStorage.getItem('gogofix_member_phone');
+  if (savedPhone) {
+    document.getElementById('account-phone').value = savedPhone;
+    accountLogin();
   }
 }
 
@@ -2244,9 +2494,9 @@ function resetLucky() {
 }
 
 // ============ 頁面切換 ============
-const pageList = ['home','shop','services','recycle','chat','repair','lucky'];
+const pageList = ['home','shop','services','recycle','chat','repair','lucky','account'];
 const topNavList = ['home','shop','services','recycle','lucky'];
-const bottomNavList = ['home','shop','services','recycle','chat'];
+const bottomNavList = ['home','shop','services','recycle','chat','account'];
 
 function switchPage(page) {
   // 隱藏所有頁面
@@ -2267,6 +2517,10 @@ function switchPage(page) {
   if (page === 'lucky') {
     loadPrizePreview();
     loadSpinPrizes();
+  }
+  // 如果切換到我的帳戶頁，自動登入
+  if (page === 'account' && !accountMember) {
+    autoLoginMember();
   }
   // 更新頂部 nav-tab 樣式
   topNavList.forEach(p => {

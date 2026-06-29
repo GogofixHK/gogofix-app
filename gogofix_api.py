@@ -157,16 +157,39 @@ def init_db():
         customer_name TEXT NOT NULL,
         customer_phone TEXT NOT NULL,
         customer_email TEXT DEFAULT '',
+        member_id INTEGER DEFAULT 0,
         device_type TEXT DEFAULT '',
         device_model TEXT DEFAULT '',
         service_id INTEGER DEFAULT 0,
         service_name TEXT DEFAULT '',
         issue_description TEXT DEFAULT '',
         estimated_price INTEGER DEFAULT 0,
+        preferred_time TEXT DEFAULT '',
         payment_method TEXT DEFAULT 'cash',
         payment_status TEXT DEFAULT 'unpaid',
         order_status TEXT DEFAULT 'pending',
+        is_read INTEGER DEFAULT 0,
         note TEXT DEFAULT '',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # 兼容舊資料庫：service_orders 加新欄位
+    so_cols = [r[1] for r in c.execute("PRAGMA table_info(service_orders)").fetchall()]
+    if 'member_id' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN member_id INTEGER DEFAULT 0")
+    if 'preferred_time' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN preferred_time TEXT DEFAULT ''")
+    if 'is_read' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN is_read INTEGER DEFAULT 0")
+
+    # 會員表
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS members (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone TEXT UNIQUE NOT NULL,
+        name TEXT DEFAULT '',
+        email TEXT DEFAULT '',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -847,12 +870,14 @@ class ServiceOrderCreate(BaseModel):
     customer_name: str
     customer_phone: str
     customer_email: str = ""
+    member_id: int = 0
     device_type: str = ""
     device_model: str = ""
     service_id: int = 0
     service_name: str = ""
     issue_description: str = ""
     estimated_price: int = 0
+    preferred_time: str = ""
     payment_method: str = "cash"
     note: str = ""
 
@@ -865,16 +890,31 @@ def create_service_order(order: ServiceOrderCreate):
     # 生成訂單號
     order_no = f"SR{datetime.now().strftime('%Y%m%d%H%M%S')}"
     
+    # 自動建立/更新會員
+    member_id = order.member_id
+    if order.customer_phone:
+        existing = db.execute("SELECT id FROM members WHERE phone=?", (order.customer_phone,)).fetchone()
+        if existing:
+            member_id = existing["id"]
+            # 更新姓名/電郵
+            if order.customer_name or order.customer_email:
+                db.execute("UPDATE members SET name=COALESCE(NULLIF(?, ''), name), email=COALESCE(NULLIF(?, ''), email) WHERE id=?",
+                           (order.customer_name, order.customer_email, member_id))
+        else:
+            cur = db.execute("INSERT INTO members (phone, name, email, created_at) VALUES (?,?,?,?)",
+                             (order.customer_phone, order.customer_name, order.customer_email, now))
+            member_id = cur.lastrowid
+    
     cur = db.execute(
         """INSERT INTO service_orders 
-        (order_no, customer_name, customer_phone, customer_email, device_type, device_model, 
-         service_id, service_name, issue_description, estimated_price, payment_method, 
-         payment_status, order_status, note, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (order_no, customer_name, customer_phone, customer_email, member_id, device_type, device_model, 
+         service_id, service_name, issue_description, estimated_price, preferred_time, payment_method, 
+         payment_status, order_status, is_read, note, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (order_no, order.customer_name, order.customer_phone, order.customer_email,
-         order.device_type, order.device_model, order.service_id, order.service_name,
-         order.issue_description, order.estimated_price, order.payment_method,
-         "unpaid", "pending", order.note, now)
+         member_id, order.device_type, order.device_model, order.service_id, order.service_name,
+         order.issue_description, order.estimated_price, order.preferred_time, order.payment_method,
+         "unpaid", "pending", 0, order.note, now)
     )
     order_id = cur.lastrowid
     db.commit()
@@ -884,7 +924,8 @@ def create_service_order(order: ServiceOrderCreate):
         "success": True,
         "order_id": order_id,
         "order_no": order_no,
-        "message": f"維修訂單 {order_no} 已建立！請到店檢測後付款。"
+        "member_id": member_id,
+        "message": f"維修訂單 {order_no} 已建立！"
     }
 
 @app.get("/api/admin/service-orders")
@@ -894,6 +935,93 @@ def get_service_orders():
     rows = db.execute("SELECT * FROM service_orders ORDER BY id DESC LIMIT 100").fetchall()
     db.close()
     return [dict(r) for r in rows]
+
+@app.get("/api/admin/service-orders/new")
+def get_new_service_orders():
+    """獲取未讀新訂單（輪詢用）"""
+    db = get_db()
+    rows = db.execute("SELECT * FROM service_orders WHERE is_read=0 ORDER BY id DESC").fetchall()
+    db.close()
+    return [dict(r) for r in rows]
+
+@app.put("/api/admin/service-orders/{order_id}/read")
+def mark_order_read(order_id: int):
+    """標記訂單已讀"""
+    db = get_db()
+    db.execute("UPDATE service_orders SET is_read=1 WHERE id=?", (order_id,))
+    db.commit()
+    db.close()
+    return {"success": True}
+
+@app.put("/api/admin/service-orders/{order_id}/status")
+def update_order_status(order_id: int, data: dict):
+    """更新訂單狀態"""
+    db = get_db()
+    db.execute("UPDATE service_orders SET order_status=? WHERE id=?", (data.get("status", "pending"), order_id))
+    db.commit()
+    db.close()
+    return {"success": True}
+
+@app.put("/api/admin/service-orders/{order_id}/payment")
+def update_order_payment(order_id: int, data: dict):
+    """更新付款狀態"""
+    db = get_db()
+    db.execute("UPDATE service_orders SET payment_status=? WHERE id=?", (data.get("payment_status", "unpaid"), order_id))
+    db.commit()
+    db.close()
+    return {"success": True}
+
+# ============ 會員系統 API ============
+
+@app.post("/api/members/login")
+def member_login(data: dict):
+    """會員登入/註冊（手機號識別）"""
+    phone = data.get("phone", "").strip()
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip()
+    
+    if not phone:
+        return {"success": False, "message": "請輸入電話號碼"}
+    
+    db = get_db()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    member = db.execute("SELECT * FROM members WHERE phone=?", (phone,)).fetchone()
+    if member:
+        # 已是會員，更新資料
+        if name or email:
+            db.execute("UPDATE members SET name=COALESCE(NULLIF(?, ''), name), email=COALESCE(NULLIF(?, ''), email) WHERE id=?",
+                       (name, email, member["id"]))
+            db.commit()
+            member = db.execute("SELECT * FROM members WHERE id=?", (member["id"],)).fetchone()
+    else:
+        # 新會員
+        cur = db.execute("INSERT INTO members (phone, name, email, created_at) VALUES (?,?,?,?)",
+                         (phone, name, email, now))
+        db.commit()
+        member = db.execute("SELECT * FROM members WHERE id=?", (cur.lastrowid,)).fetchone()
+    
+    # 獲取歷史訂單
+    orders = db.execute("SELECT * FROM service_orders WHERE member_id=? ORDER BY id DESC LIMIT 20", (member["id"],)).fetchall()
+    db.close()
+    
+    return {
+        "success": True,
+        "member": dict(member),
+        "orders": [dict(o) for o in orders]
+    }
+
+@app.get("/api/members/{phone}/orders")
+def get_member_orders(phone: str):
+    """獲取會員歷史訂單"""
+    db = get_db()
+    member = db.execute("SELECT * FROM members WHERE phone=?", (phone,)).fetchone()
+    if not member:
+        db.close()
+        return {"success": False, "message": "會員不存在"}
+    orders = db.execute("SELECT * FROM service_orders WHERE member_id=? ORDER BY id DESC LIMIT 50", (member["id"],)).fetchall()
+    db.close()
+    return {"success": True, "orders": [dict(o) for o in orders]}
 
 # ============ 抽獎系統 API ============
 import random
