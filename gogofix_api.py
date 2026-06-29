@@ -148,6 +148,47 @@ def init_db():
     )
     """)
     
+    # 抽獎獎品表
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS lucky_draw_prizes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        prize_type TEXT DEFAULT 'physical',
+        probability REAL DEFAULT 0.1,
+        is_active INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    
+    # 抽獎記錄表
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS lucky_draw_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        repair_order_no TEXT NOT NULL,
+        customer_name TEXT,
+        customer_phone TEXT,
+        prize_name TEXT,
+        prize_type TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    
+    # 插入預設抽獎獎品
+    c.execute("SELECT COUNT(*) FROM lucky_draw_prizes")
+    if c.fetchone()[0] == 0:
+        default_prizes = [
+            ("$20 維修減免券", "discount", 0.35),
+            ("$50 維修減免券", "discount", 0.25),
+            ("$80 維修減免券", "discount", 0.15),
+            ("手機 Mon 貼", "physical", 0.15),
+            ("手機充電線", "physical", 0.10),
+        ]
+        for row in default_prizes:
+            c.execute(
+                "INSERT INTO lucky_draw_prizes (name, prize_type, probability) VALUES (?,?,?)",
+                row
+            )
+    
     # 插入預設維修項目
     c.execute("SELECT COUNT(*) FROM repair_services")
     if c.fetchone()[0] == 0:
