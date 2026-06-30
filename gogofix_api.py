@@ -32,6 +32,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 在 Docker 中使用 /data 目錄存儲資料庫，本地使用當前目錄
 DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)
 os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(os.path.join(DATA_DIR, "uploads", "products"), exist_ok=True)
 DB_PATH = os.path.join(DATA_DIR, "gogofix.db")
 
 # ============ 數據庫初始化 ============
@@ -1010,6 +1011,7 @@ def admin_verify(request: Request):
 
 # ============ 掛載靜態檔案 ============
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+app.mount("/uploads", StaticFiles(directory=os.path.join(DATA_DIR, "uploads")), name="uploads")
 
 # 啟動方式：uvicorn gogofix_api:app --host 0.0.0.0 --port 8000
 
@@ -1065,7 +1067,7 @@ async def upload_product_image(product_id: int, request: Request, file: UploadFi
         raise HTTPException(status_code=400, detail="只支援 JPG / PNG / WebP / GIF 圖片")
 
     ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
-    upload_dir = os.path.join(BASE_DIR, "static", "uploads", "products")
+    upload_dir = os.path.join(DATA_DIR, "uploads", "products")
     os.makedirs(upload_dir, exist_ok=True)
     filename = f"product_{product_id}.{ext}"
     filepath = os.path.join(upload_dir, filename)
@@ -1073,7 +1075,7 @@ async def upload_product_image(product_id: int, request: Request, file: UploadFi
     with open(filepath, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
-    image_url = f"/static/uploads/products/{filename}"
+    image_url = f"/uploads/products/{filename}"
 
     db = get_db()
     db.execute("UPDATE products SET image_url=? WHERE id=?", (image_url, product_id))
