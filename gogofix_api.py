@@ -769,10 +769,6 @@ async def upload_product_image(product_id: int, request: Request, file: UploadFi
 
     db = get_db()
     db.execute("UPDATE products SET image_url=? WHERE id=?", (image_url, product_id))
-    # 同步更新同名商品（不同顏色）
-    row = db.execute("SELECT name FROM products WHERE id=?", (product_id,)).fetchone()
-    if row:
-        db.execute("UPDATE products SET image_url=? WHERE name=?", (image_url, row["name"]))
     db.commit()
     db.close()
 
