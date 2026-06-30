@@ -267,12 +267,12 @@ def init_db():
     c.execute("SELECT COUNT(*) FROM lucky_draw_prizes")
     if c.fetchone()[0] == 0:
         default_prizes = [
-            ("手機充電線", "Type-C / Lightning 充電線一條", "physical", 0, 0.20, "#007aff", "🔌"),
-            ("手機Mon貼", "全貼合鋼化玻璃保護貼", "physical", 0, 0.20, "#34c759", "📱"),
-            ("維修減免 $20", "下次維修費用減免港幣$20", "discount", 20, 0.25, "#5856d6", "🎫"),
-            ("維修減免 $50", "下次維修費用減免港幣$50", "discount", 50, 0.15, "#ff9500", "🎫"),
-            ("維修減免 $80", "下次維修費用減免港幣$80", "discount", 80, 0.05, "#ff3b30", "🎫"),
-            ("謝謝參與", "感謝您的支持，下次再試！", "empty", 0, 0.15, "#aeaeb2", "🙏"),
+            ("手機充電線", "Type-C / Lightning 充電線一條", "physical", 0, 0.20, "#007aff", ""),
+            ("手機Mon貼", "全貼合鋼化玻璃保護貼", "physical", 0, 0.20, "#34c759", ""),
+            ("維修減免 $20", "下次維修費用減免港幣$20", "discount", 20, 0.25, "#5856d6", ""),
+            ("維修減免 $50", "下次維修費用減免港幣$50", "discount", 50, 0.15, "#ff9500", ""),
+            ("維修減免 $80", "下次維修費用減免港幣$80", "discount", 80, 0.05, "#ff3b30", ""),
+            ("謝謝參與", "感謝您的支持，下次再試！", "empty", 0, 0.15, "#aeaeb2", ""),
         ]
         for row in default_prizes:
             c.execute(
@@ -1375,8 +1375,8 @@ import threading
 def _init_prices_background():
     try:
         fetch_recycle_prices()
-        print("✅ 回收價格已初始化/更新")
+        print("回收價格已初始化/更新")
     except Exception as e:
-        print(f"⚠️ 價格初始化失敗（不影響網站運行）: {e}")
+        print(f"價格初始化失敗（不影響網站運行）: {e}")
 
 threading.Thread(target=_init_prices_background, daemon=True).start()
