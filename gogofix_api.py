@@ -13,6 +13,8 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import hashlib
+import shutil
+from fastapi import UploadFile, File, Form
 
 # ============ 初始化 ============
 app = FastAPI(title="GoGofix API", version="1.0.0")
@@ -672,6 +674,48 @@ def add_product(p: ProductAdd, request: Request):
     db.commit()
     db.close()
     return {"success": True, "message": "商品新增成功"}
+
+@app.post("/api/admin/products/{product_id}/upload-image")
+async def upload_product_image(product_id: int, request: Request, file: UploadFile = File(...)):
+    """上傳商品圖片"""
+    require_admin(request)
+
+    # 只接受圖片格式
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="只支援 JPG / PNG / WebP / GIF 圖片")
+
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+    upload_dir = os.path.join(BASE_DIR, "static", "uploads", "products")
+    os.makedirs(upload_dir, exist_ok=True)
+    filename = f"product_{product_id}.{ext}"
+    filepath = os.path.join(upload_dir, filename)
+
+    with open(filepath, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    image_url = f"/static/uploads/products/{filename}"
+
+    db = get_db()
+    db.execute("UPDATE products SET image_url=? WHERE id=?", (image_url, product_id))
+    # 同步更新同名商品（不同顏色）
+    row = db.execute("SELECT name FROM products WHERE id=?", (product_id,)).fetchone()
+    if row:
+        db.execute("UPDATE products SET image_url=? WHERE name=?", (image_url, row["name"]))
+    db.commit()
+    db.close()
+
+    return {"success": True, "image_url": image_url}
+
+@app.delete("/api/admin/products/{product_id}")
+def delete_product(product_id: int, request: Request):
+    """刪除商品"""
+    require_admin(request)
+    db = get_db()
+    db.execute("UPDATE products SET status='inactive' WHERE id=?", (product_id,))
+    db.commit()
+    db.close()
+    return {"success": True}
 
 # ============ 更新維修單價格 API ============
 class RepairQuote(BaseModel):

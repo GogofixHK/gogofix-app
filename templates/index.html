@@ -270,58 +270,140 @@
     font-weight: 400;
   }
   
-  /* 商品卡片 */
-  .product-list { display: flex; flex-direction: column; gap: 12px; }
-  
-  .product-card {
-    background: var(--card-solid);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    display: flex;
-    gap: 14px;
-    padding: 14px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: all var(--transition);
-    box-shadow: var(--shadow-sm);
-  }
-  
-  .product-card:active {
-    transform: scale(0.98);
-    box-shadow: var(--shadow-md);
-    border-color: var(--separator);
-  }
-  
-  .product-img {
-    width: 100px;
-    height: 100px;
-    background: linear-gradient(135deg, #f2f2f7, #e5e5ea);
-    border-radius: var(--radius-sm);
+  /* ===== 商品商城 ===== */
+  .shop-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 42px;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .shop-header h2 { margin-bottom: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
+  .shop-subtitle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .product-card {
+    background: var(--card-solid);
+    border-radius: 18px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid var(--separator);
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+    border-color: rgba(0,122,255,0.18);
+  }
+  .product-card:active { transform: scale(0.97); }
+
+  /* 圖片區 */
+  .product-img-wrap {
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(145deg, #f0f0f5, #e8e8ed);
+    overflow: hidden;
+    position: relative;
+  }
+  .product-img-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .product-img-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: #c7c7cc;
+  }
+
+  /* 庫存 badge */
+  .product-stock-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(8px);
+    color: var(--green-dark);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid rgba(52,199,89,0.2);
+  }
+  .product-stock-badge.low { color: var(--orange); border-color: rgba(255,149,0,0.2); }
+  .product-stock-badge.out { color: var(--red); border-color: rgba(255,59,48,0.2); }
+
+  /* 卡片底部信息 */
+  .product-body {
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .product-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .product-color-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .color-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(0,0,0,0.10);
     flex-shrink: 0;
   }
-  
-  .product-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-  .product-name { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
-  .product-color { font-size: 12px; color: var(--text2); margin-top: 3px; }
-  .product-stock { font-size: 11px; color: var(--green); margin-top: 3px; font-weight: 500; }
-  .product-price { font-size: 20px; font-weight: 700; color: var(--text); margin-top: 8px; letter-spacing: -0.3px; }
-  
-  .color-dots {
+  .product-color-label {
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .product-price-row {
     display: flex;
-    gap: 6px;
-    margin-top: 8px;
+    align-items: baseline;
+    gap: 4px;
+    margin-top: auto;
+    padding-top: 4px;
+    border-top: 1px solid var(--separator);
   }
-  
-  .color-dot {
-    width: 20px; height: 20px;
+  .product-currency { font-size: 11px; font-weight: 700; color: var(--text2); }
+  .product-price { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+
+  /* 添加按鈕 */
+  .product-add-btn {
+    position: absolute;
+    bottom: 12px; right: 12px;
+    width: 30px; height: 30px;
+    background: var(--accent);
+    border: none;
     border-radius: 50%;
-    border: 1.5px solid rgba(0,0,0,0.08);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,122,255,0.35);
+    transition: transform var(--transition-fast), background var(--transition-fast);
+    flex-shrink: 0;
   }
+  .product-add-btn:hover { background: var(--accent-dark); transform: scale(1.1); }
+  .product-add-btn:active { transform: scale(0.9); }
+
+  /* 舊佈局兼容 */
+  .product-list { display: flex; flex-direction: column; gap: 12px; }
   
   /* 彈窗 */
   .modal-overlay {
@@ -1216,12 +1298,56 @@
   </div>
 </div>
 
-<!-- ==================== 商品商店頁面 ==================== -->
+<!-- ==================== 商品商城頁面 ==================== -->
 <div class="page" id="page-shop">
-  <h2 class="section-title">🛒 商品商店</h2>
-  <div class="product-list" id="product-list">
-    <div class="loading">載入中...</div>
+
+  <!-- 商城頭部 -->
+  <div class="shop-header">
+    <div>
+      <h2>商品商城</h2>
+      <div class="shop-subtitle">正品現貨 · 即買即取</div>
+    </div>
+    <div style="width:36px;height:36px;background:var(--card-solid);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);border:1px solid var(--separator);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text2)"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    </div>
   </div>
+
+  <!-- 搜索欄 -->
+  <div style="position:relative;margin-bottom:16px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="search" id="shop-search" placeholder="搜索商品..." oninput="filterProducts()" style="width:100%;padding:11px 14px 11px 40px;border:1.5px solid var(--separator);border-radius:14px;background:var(--card-solid);font-size:15px;font-family:inherit;color:var(--text);outline:none;transition:border-color var(--transition);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--separator)'">
+  </div>
+
+  <!-- 分類篩選 -->
+  <div id="shop-filter-bar" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-bottom:16px;">
+    <button onclick="filterCategory(this,'')" class="shop-filter-btn active" style="white-space:nowrap;padding:7px 16px;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all var(--transition-fast);">全部</button>
+    <button onclick="filterCategory(this,'game_console')" class="shop-filter-btn" style="white-space:nowrap;padding:7px 16px;border-radius:20px;border:1.5px solid var(--separator);background:var(--card-solid);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all var(--transition-fast);">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:4px;"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>遊戲機</button>
+    <button onclick="filterCategory(this,'accessory')" class="shop-filter-btn" style="white-space:nowrap;padding:7px 16px;border-radius:20px;border:1.5px solid var(--separator);background:var(--card-solid);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all var(--transition-fast);">配件</button>
+    <button onclick="filterCategory(this,'phone')" class="shop-filter-btn" style="white-space:nowrap;padding:7px 16px;border-radius:20px;border:1.5px solid var(--separator);background:var(--card-solid);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all var(--transition-fast);">手機</button>
+  </div>
+
+  <!-- 商品網格 -->
+  <div class="product-grid" id="product-list">
+    <!-- skeleton -->
+    <div style="border-radius:18px;overflow:hidden;background:var(--card-solid);border:1px solid var(--separator);">
+      <div class="skeleton" style="aspect-ratio:1/1;"></div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+        <div class="skeleton" style="height:14px;border-radius:6px;width:80%;"></div>
+        <div class="skeleton" style="height:12px;border-radius:6px;width:50%;"></div>
+        <div class="skeleton" style="height:18px;border-radius:6px;width:40%;margin-top:4px;"></div>
+      </div>
+    </div>
+    <div style="border-radius:18px;overflow:hidden;background:var(--card-solid);border:1px solid var(--separator);">
+      <div class="skeleton" style="aspect-ratio:1/1;"></div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+        <div class="skeleton" style="height:14px;border-radius:6px;width:80%;"></div>
+        <div class="skeleton" style="height:12px;border-radius:6px;width:50%;"></div>
+        <div class="skeleton" style="height:18px;border-radius:6px;width:40%;margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ==================== 維修進度頁面 ==================== -->
@@ -2055,80 +2181,171 @@ function autoLoginMember() {
   }
 }
 
-// ============ 商品載入 ============
+// ============ 商品商城 ============
+let allProducts = [];
+let currentCategory = '';
+let currentSearch = '';
+
 async function loadProducts() {
-  const el = document.getElementById('product-list');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">載入中...</div>';
-  
   try {
     const res = await fetch(API + '/api/products');
-    const products = await res.json();
-    
-    if (products.length === 0) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">暫無商品</div></div>';
-      return;
-    }
-    
-    // 按名稱分組（相同商品不同顏色）
-    const grouped = {};
-    products.forEach(p => {
-      if (!grouped[p.name]) grouped[p.name] = [];
-      grouped[p.name].push(p);
-    });
-    
-    let html = '';
-    for (const [name, items] of Object.entries(grouped)) {
-      const first = items[0];
-      const totalStock = items.reduce((s, i) => s + i.stock, 0);
-      const colors = items.map(i => {
-        const c = {'黃色':'#e6c229','珊瑚藍':'#2a5c8d','珊瑚紅':'#d94a6e','青綠色':'#2db88d','灰色':'#808080'}[i.color] || '#ccc';
-        return `<div class="color-dot" style="background:${c}" title="${i.color}"></div>`;
-      }).join('');
-      
-      html += `
-        <div class="product-card" onclick="openOrderModal(${first.id}, '${name}')">
-          <div class="product-img">🎮</div>
-          <div class="product-info">
-            <div class="product-name">${name}</div>
-            <div class="product-color">${items.length}款顏色可選</div>
-            <div class="color-dots">${colors}</div>
-            <div class="product-stock">現貨 ${totalStock} 台</div>
-            <div class="product-price">HK$ ${first.price}</div>
+    allProducts = await res.json();
+    renderProducts();
+  } catch(e) {
+    const el = document.getElementById('product-list');
+    if (el) el.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:40px 20px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text3);margin-bottom:12px;"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+        <div style="font-size:14px;color:var(--text2);font-weight:600;">載入失敗，請重新整理</div>
+      </div>`;
+  }
+}
+
+function renderProducts() {
+  const el = document.getElementById('product-list');
+  if (!el) return;
+
+  let list = allProducts.slice();
+  if (currentCategory) list = list.filter(p => p.category === currentCategory);
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    list = list.filter(p => (p.name || '').toLowerCase().includes(q));
+  }
+
+  if (list.length === 0) {
+    el.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:48px 20px;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--text3);margin-bottom:16px;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;">暫無商品</div>
+        <div style="font-size:13px;color:var(--text2);">敬請期待更多新品</div>
+      </div>`;
+    return;
+  }
+
+  // 按名稱分組
+  const grouped = {};
+  list.forEach(p => {
+    if (!grouped[p.name]) grouped[p.name] = [];
+    grouped[p.name].push(p);
+  });
+
+  const colorMap = {
+    '黃色':'#f0c520','珊瑚藍':'#3b82f6','珊瑚紅':'#ef4444',
+    '青綠色':'#10b981','灰色':'#6b7280','黑色':'#1c1c1e',
+    '白色':'#f5f5f5','藍色':'#3b82f6','紅色':'#ef4444',
+    '綠色':'#10b981','粉色':'#ec4899','紫色':'#8b5cf6',
+  };
+
+  let html = '';
+  let idx = 0;
+  for (const [name, items] of Object.entries(grouped)) {
+    const first = items[0];
+    const totalStock = items.reduce((s, i) => s + i.stock, 0);
+    const colorDots = items.slice(0,5).map(i => {
+      const c = colorMap[i.color] || '#c7c7cc';
+      return `<span class="color-dot" style="background:${c};" title="${i.color}"></span>`;
+    }).join('');
+    const moreColors = items.length > 5 ? `<span style="font-size:10px;color:var(--text2);">+${items.length-5}</span>` : '';
+
+    let stockBadge = '';
+    if (totalStock === 0) stockBadge = `<span class="product-stock-badge out">已售罄</span>`;
+    else if (totalStock <= 3) stockBadge = `<span class="product-stock-badge low">僅剩 ${totalStock}</span>`;
+    else stockBadge = `<span class="product-stock-badge">有貨</span>`;
+
+    // SVG 佔位圖（遊戲機形狀）
+    const placeholder = `
+      <div class="product-img-placeholder">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="20" height="14" x="2" y="5" rx="3"/>
+          <path d="M2 10h20"/>
+          <circle cx="7" cy="14" r="1" fill="currentColor"/>
+          <circle cx="10" cy="12" r="1" fill="currentColor"/>
+          <circle cx="7" cy="10" r="1" fill="currentColor"/>
+          <circle cx="4" cy="12" r="1" fill="currentColor"/>
+          <circle cx="17" cy="11" r="1.5" fill="currentColor"/>
+          <circle cx="20" cy="11" r="1.5" fill="currentColor"/>
+        </svg>
+      </div>`;
+
+    html += `
+      <div class="product-card fade-in-up" style="animation-delay:${idx * 60}ms;" onclick="openOrderModal(${first.id}, '${name.replace(/'/g,"\\'")}')">
+        <div class="product-img-wrap">
+          ${first.image_url
+            ? `<img src="${first.image_url}" alt="${name}" loading="lazy" onerror="this.outerHTML=\`${placeholder}\`">`
+            : placeholder}
+          ${stockBadge}
+        </div>
+        <div class="product-body">
+          <div class="product-name">${name}</div>
+          <div class="product-color-row">
+            ${colorDots}${moreColors}
+            <span class="product-color-label">${items.length > 1 ? items.length+'款' : items[0].color || ''}</span>
+          </div>
+          <div class="product-price-row">
+            <span class="product-currency">HK$</span>
+            <span class="product-price">${first.price.toLocaleString()}</span>
           </div>
         </div>
-      `;
-    }
-    
-    el.innerHTML = html;
-  } catch(e) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">載入失敗，請重新整理</div></div>';
+        <button class="product-add-btn" onclick="event.stopPropagation();openOrderModal(${first.id},'${name.replace(/'/g,"\\'")}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </div>`;
+    idx++;
   }
+  el.innerHTML = html;
+}
+
+function filterCategory(btn, cat) {
+  currentCategory = cat;
+  document.querySelectorAll('.shop-filter-btn').forEach(b => {
+    b.style.background = 'var(--card-solid)';
+    b.style.color = 'var(--text)';
+    b.style.borderColor = 'var(--separator)';
+  });
+  btn.style.background = 'var(--accent)';
+  btn.style.color = 'white';
+  btn.style.borderColor = 'var(--accent)';
+  renderProducts();
+}
+
+function filterProducts() {
+  const q = document.getElementById('shop-search');
+  currentSearch = q ? q.value.trim() : '';
+  renderProducts();
 }
 
 // ============ 下單彈窗 ============
 function openOrderModal(productId, productName) {
   currentProduct = {id: productId, name: productName};
   
-  // 載入該商品所有顏色
-  fetch(API + '/api/products')
-    .then(r => r.json())
-    .then(products => {
-      const sameProducts = products.filter(p => p.name === productName);
-      const colorsEl = document.getElementById('order-colors');
-      
-      let colorsHtml = '';
-      sameProducts.forEach(p => {
-        const c = {'黃色':'#e6c229','珊瑚藍':'#2a5c8d','珊瑚紅':'#d94a6e','青綠色':'#2db88d','灰色':'#808080'}[p.color] || '#ccc';
-        colorsHtml += `<div class="color-option" style="border-color:${c};" onclick="selectColor(this, '${p.color}', ${p.id})" data-id="${p.id}" data-color="${p.color}">${p.color}</div>`;
-      });
-      colorsEl.innerHTML = colorsHtml;
-      
-      document.getElementById('order-product-info').innerHTML = 
-        `<strong>${productName}</strong><br>單價：HK$ ${sameProducts[0].price}`;
-      
-      document.getElementById('order-modal').classList.add('show');
-    });
+  // 使用已載入的商品數據，避免重複請求
+  const products = allProducts.length ? allProducts : [];
+  const sameProducts = products.filter(p => p.name === productName);
+  
+  if (sameProducts.length === 0) {
+    // fallback: 重新請求
+    fetch(API + '/api/products')
+      .then(r => r.json())
+      .then(all => { allProducts = all; openOrderModal(productId, productName); });
+    return;
+  }
+
+  const colorsEl = document.getElementById('order-colors');
+  let colorsHtml = '';
+  const colorMap = {
+    '黃色':'#f0c520','珊瑚藍':'#3b82f6','珊瑚紅':'#ef4444',
+    '青綠色':'#10b981','灰色':'#6b7280','黑色':'#1c1c1e',
+    '白色':'#e5e5ea','藍色':'#3b82f6','紅色':'#ef4444',
+    '綠色':'#10b981','粉色':'#ec4899','紫色':'#8b5cf6',
+  };
+  sameProducts.forEach(p => {
+    const c = colorMap[p.color] || '#ccc';
+    colorsHtml += `<div class="color-option" style="border-color:${c};" onclick="selectColor(this, '${p.color}', ${p.id})" data-id="${p.id}" data-color="${p.color}">${p.color}</div>`;
+  });
+  colorsEl.innerHTML = colorsHtml;
+  document.getElementById('order-product-info').innerHTML =
+    `<strong>${productName}</strong><br>單價：HK$ ${sameProducts[0].price}`;
+  document.getElementById('order-modal').classList.add('show');
 }
 
 function selectColor(el, color, id) {
