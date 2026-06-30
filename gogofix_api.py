@@ -778,6 +778,48 @@ async def upload_product_image(product_id: int, request: Request, file: UploadFi
 
     return {"success": True, "image_url": image_url}
 
+class ProductUpdate(BaseModel):
+    name: str = ""
+    category: str = ""
+    color: str = ""
+    price: int = 0
+    stock: int = 0
+    description: str = ""
+
+@app.put("/api/admin/products/{product_id}")
+def update_product(product_id: int, p: ProductUpdate, request: Request):
+    """更新商品資訊（名稱、類別、顏色、價格、庫存、描述）"""
+    require_admin(request)
+    db = get_db()
+    updates = []
+    values = []
+    if p.name:
+        updates.append("name=?")
+        values.append(p.name)
+    if p.category:
+        updates.append("category=?")
+        values.append(p.category)
+    # color 可以是空字串（表示不修改），但我們用 sentinel 來判斷
+    if p.color != "__UNCHANGED__":
+        updates.append("color=?")
+        values.append(p.color)
+    if p.price > 0:
+        updates.append("price=?")
+        values.append(p.price)
+    if p.stock >= 0:
+        updates.append("stock=?")
+        values.append(p.stock)
+    # description 總是可以更新（包括清空）
+    if p.description != "__UNCHANGED__":
+        updates.append("description=?")
+        values.append(p.description)
+    if updates:
+        values.append(product_id)
+        db.execute(f"UPDATE products SET {', '.join(updates)} WHERE id=?", values)
+        db.commit()
+    db.close()
+    return {"success": True, "message": "商品更新成功"}
+
 @app.delete("/api/admin/products/{product_id}")
 def delete_product(product_id: int, request: Request):
     """刪除商品"""

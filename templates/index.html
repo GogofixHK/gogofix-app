@@ -355,6 +355,15 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  .product-desc {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   .product-color-row {
     display: flex;
     align-items: center;
@@ -2283,13 +2292,7 @@ function renderProducts() {
     return;
   }
 
-  // 按名稱分組
-  const grouped = {};
-  list.forEach(p => {
-    if (!grouped[p.name]) grouped[p.name] = [];
-    grouped[p.name].push(p);
-  });
-
+  // 每個商品（含不同顏色）獨立展示
   const colorMap = {
     '黃色':'#f0c520','珊瑚藍':'#3b82f6','珊瑚紅':'#ef4444',
     '青綠色':'#10b981','灰色':'#6b7280','黑色':'#1c1c1e',
@@ -2299,55 +2302,54 @@ function renderProducts() {
 
   let html = '';
   let idx = 0;
-  for (const [name, items] of Object.entries(grouped)) {
-    const first = items[0];
-    const totalStock = items.reduce((s, i) => s + i.stock, 0);
-    const colorDots = items.slice(0,5).map(i => {
-      const c = colorMap[i.color] || '#c7c7cc';
-      return `<span class="color-dot" style="background:${c};" title="${i.color}"></span>`;
-    }).join('');
-    const moreColors = items.length > 5 ? `<span style="font-size:10px;color:var(--text2);">+${items.length-5}</span>` : '';
+  for (const p of list) {
+    const productName = p.name;
+    const colorName = p.color || '';
+    const displayName = colorName ? `${productName} — ${colorName}` : productName;
 
     let stockBadge = '';
-    if (totalStock === 0) stockBadge = `<span class="product-stock-badge out">已售罄</span>`;
-    else if (totalStock <= 3) stockBadge = `<span class="product-stock-badge low">僅剩 ${totalStock}</span>`;
+    if (p.stock === 0) stockBadge = `<span class="product-stock-badge out">已售罄</span>`;
+    else if (p.stock <= 3) stockBadge = `<span class="product-stock-badge low">僅剩 ${p.stock}</span>`;
     else stockBadge = `<span class="product-stock-badge">有貨</span>`;
 
-    // SVG 佔位圖（遊戲機形狀）
-    const placeholder = `
-      <div class="product-img-placeholder">
-        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-          <rect width="20" height="14" x="2" y="5" rx="3"/>
-          <path d="M2 10h20"/>
-          <circle cx="7" cy="14" r="1" fill="currentColor"/>
-          <circle cx="10" cy="12" r="1" fill="currentColor"/>
-          <circle cx="7" cy="10" r="1" fill="currentColor"/>
-          <circle cx="4" cy="12" r="1" fill="currentColor"/>
-          <circle cx="17" cy="11" r="1.5" fill="currentColor"/>
-          <circle cx="20" cy="11" r="1.5" fill="currentColor"/>
-        </svg>
-      </div>`;
+    // 顏色圓點
+    const dotColor = colorMap[colorName] || '#c7c7cc';
+    const colorDot = colorName ? `<span class="color-dot" style="background:${dotColor};" title="${colorName}"></span>` : '';
 
+    const placeholderId = 'ph-' + (idx + 1) + '-' + Math.random().toString(36).slice(2,6);
     html += `
-      <div class="product-card fade-in-up" style="animation-delay:${idx * 60}ms;" onclick="openOrderModal(${first.id}, '${name.replace(/'/g,"\\'")}')">
+      <div class="product-card fade-in-up" style="animation-delay:${idx * 60}ms;" onclick="openOrderModal(${p.id}, '${productName.replace(/'/g,"\\'")}')">
         <div class="product-img-wrap">
-          ${first.image_url
-            ? `<img src="${first.image_url}" alt="${name}" loading="lazy" onerror="this.outerHTML=\`${placeholder}\`">`
-            : placeholder}
+          ${p.image_url
+            ? `<img src="${p.image_url}" alt="${displayName}" loading="lazy" onerror="document.getElementById('${placeholderId}').style.display='flex';this.remove();">`
+            : ''}
+          <div class="product-img-placeholder" id="${placeholderId}" style="display:${p.image_url ? 'none' : 'flex'}">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="3"/>
+              <path d="M2 10h20"/>
+              <circle cx="7" cy="14" r="1" fill="currentColor"/>
+              <circle cx="10" cy="12" r="1" fill="currentColor"/>
+              <circle cx="7" cy="10" r="1" fill="currentColor"/>
+              <circle cx="4" cy="12" r="1" fill="currentColor"/>
+              <circle cx="17" cy="11" r="1.5" fill="currentColor"/>
+              <circle cx="20" cy="11" r="1.5" fill="currentColor"/>
+            </svg>
+          </div>
           ${stockBadge}
         </div>
         <div class="product-body">
-          <div class="product-name">${name}</div>
+          <div class="product-name">${displayName}</div>
+          ${p.description ? `<div class="product-desc">${p.description}</div>` : ''}
           <div class="product-color-row">
-            ${colorDots}${moreColors}
-            <span class="product-color-label">${items.length > 1 ? items.length+'款' : items[0].color || ''}</span>
+            ${colorDot}
+            <span class="product-color-label">${colorName}</span>
           </div>
           <div class="product-price-row">
             <span class="product-currency">HK$</span>
-            <span class="product-price">${first.price.toLocaleString()}</span>
+            <span class="product-price">${p.price.toLocaleString()}</span>
           </div>
         </div>
-        <button class="product-add-btn" onclick="event.stopPropagation();openOrderModal(${first.id},'${name.replace(/'/g,"\\'")}')">
+        <button class="product-add-btn" onclick="event.stopPropagation();openOrderModal(${p.id},'${productName.replace(/'/g,"\\'")}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </button>
       </div>`;

@@ -424,8 +424,8 @@ function adminLogout() {
     </div>
     <div class="table-card">
       <table>
-        <thead><tr><th>圖片</th><th>ID</th><th>名稱</th><th>類別</th><th>顏色</th><th>價格</th><th>庫存</th><th>操作</th></tr></thead>
-        <tbody id="products-tbody"><tr><td colspan="8">載入中...</td></tr></tbody>
+        <thead><tr><th>圖片</th><th>ID</th><th>名稱</th><th>類別</th><th>顏色</th><th>價格</th><th>庫存</th><th>描述</th><th>操作</th></tr></thead>
+        <tbody id="products-tbody"><tr><td colspan="9">載入中...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -447,6 +447,41 @@ function adminLogout() {
       <div style="display:flex; gap:10px;">
         <button class="btn btn-red" style="flex:1;" onclick="doUploadImage()">上傳</button>
         <button class="btn btn-gray" style="flex:1;" onclick="document.getElementById('upload-image-modal').style.display='none'">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 編輯商品彈窗 -->
+  <div id="edit-product-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:16px; padding:30px; width:90%; max-width:500px; max-height:85vh; overflow-y:auto;">
+      <h3 style="margin-bottom:16px;">✏️ 編輯商品</h3>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px; font-weight:700; display:block; margin-bottom:4px;">商品名稱</label>
+        <input id="edit-p-name" style="width:100%; padding:10px; border:2px solid #e0e0e0; border-radius:8px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px; font-weight:700; display:block; margin-bottom:4px;">類別</label>
+        <input id="edit-p-category" style="width:100%; padding:10px; border:2px solid #e0e0e0; border-radius:8px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px; font-weight:700; display:block; margin-bottom:4px;">顏色</label>
+        <input id="edit-p-color" style="width:100%; padding:10px; border:2px solid #e0e0e0; border-radius:8px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px; font-weight:700; display:block; margin-bottom:4px;">價格（HK$）</label>
+        <input id="edit-p-price" type="number" style="width:100%; padding:10px; border:2px solid #e0e0e0; border-radius:8px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px; font-weight:700; display:block; margin-bottom:4px;">庫存數量</label>
+        <input id="edit-p-stock" type="number" style="width:100%; padding:10px; border:2px solid #e0e0e0; border-radius:8px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px; font-weight:700; display:block; margin-bottom:4px;">商品描述</label>
+        <textarea id="edit-p-desc" rows="3" style="width:100%; padding:10px; border:2px solid #e0e0e0; border-radius:8px; resize:vertical; font-family:inherit;" placeholder="輸入商品描述..."></textarea>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn btn-red" style="flex:1;" onclick="submitEditProduct()">儲存變更</button>
+        <button class="btn btn-gray" style="flex:1;" onclick="document.getElementById('edit-product-modal').style.display='none'">取消</button>
       </div>
     </div>
   </div>
@@ -587,6 +622,10 @@ function adminLogout() {
     <div style="margin-bottom:12px;">
       <label style="font-size:13px; font-weight:700; display:block; margin-bottom:4px;">庫存數量</label>
       <input id="new-p-stock" type="number" style="width:100%; padding:10px; border:2px solid #e0e0e0; border-radius:8px;" placeholder="10">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:13px; font-weight:700; display:block; margin-bottom:4px;">商品描述</label>
+      <textarea id="new-p-desc" rows="3" style="width:100%; padding:10px; border:2px solid #e0e0e0; border-radius:8px; resize:vertical; font-family:inherit;" placeholder="輸入商品描述..."></textarea>
     </div>
     <div style="display:flex; gap:10px; margin-top:20px;">
       <button class="btn btn-red" style="flex:1;" onclick="submitNewProduct()">確認新增</button>
@@ -823,6 +862,9 @@ async function loadProductsAdmin() {
       const imgTag = p.image_url
         ? `<img src="${p.image_url}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
         : `<div style="width:40px;height:40px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#ccc;">📷</div>`;
+      const descPreview = (p.description || '').length > 20
+        ? (p.description || '').slice(0,20) + '...'
+        : (p.description || '-');
       html += `<tr>
         <td>${imgTag}</td>
         <td>${p.id}</td>
@@ -831,8 +873,10 @@ async function loadProductsAdmin() {
         <td>${p.color || '-'}</td>
         <td>HK$ ${p.price}</td>
         <td>${p.stock}</td>
+        <td title="${(p.description||'').replace(/"/g,'&quot;')}" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#666;">${descPreview}</td>
         <td style="white-space:nowrap;">
-          <button class="btn btn-gray" style="padding:4px 10px; font-size:12px;" onclick="showUploadImage(${p.id}, '${p.name.replace(/'/g,"\\'")}')">🖼️ 圖片</button>
+          <button class="btn btn-gray" style="padding:4px 8px; font-size:11px;" onclick="showEditProduct(${p.id}, '${p.name.replace(/'/g,"\\'")}', '${(p.category||'').replace(/'/g,"\\'")}', '${(p.color||'').replace(/'/g,"\\'")}', ${p.price}, ${p.stock}, '${(p.description||'').replace(/'/g,"\\'").replace(/\n/g,'\\n')}')">✏️ 編輯</button>
+          <button class="btn btn-gray" style="padding:4px 8px; font-size:11px;" onclick="showUploadImage(${p.id}, '${p.name.replace(/'/g,"\\'")}')">🖼️ 圖片</button>
         </td>
       </tr>`;
     });
@@ -850,6 +894,7 @@ async function submitNewProduct() {
   const color = document.getElementById('new-p-color').value.trim();
   const price = parseInt(document.getElementById('new-p-price').value) || 0;
   const stock = parseInt(document.getElementById('new-p-stock').value) || 0;
+  const description = document.getElementById('new-p-desc').value.trim();
   
   if (!name || !category) {
     alert('請填寫商品名稱和類別');
@@ -861,13 +906,59 @@ async function submitNewProduct() {
     const res = await adminFetch('/api/admin/products/add', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({name, category, color, price, stock})
+      body: JSON.stringify({name, category, color, price, stock, description})
     });
     alert('商品新增成功！');
     document.getElementById('add-product-modal').style.display = 'none';
     loadProductsAdmin();
   } catch(e) {
     alert('新增失敗');
+  }
+}
+
+// ============ 編輯商品 ============
+let currentEditProductId = 0;
+
+function showEditProduct(id, name, category, color, price, stock, description) {
+  currentEditProductId = id;
+  document.getElementById('edit-p-name').value = name;
+  document.getElementById('edit-p-category').value = category;
+  document.getElementById('edit-p-color').value = color;
+  document.getElementById('edit-p-price').value = price;
+  document.getElementById('edit-p-stock').value = stock;
+  document.getElementById('edit-p-desc').value = description.replace(/\\n/g, '\n');
+  document.getElementById('edit-product-modal').style.display = 'flex';
+}
+
+async function submitEditProduct() {
+  const name = document.getElementById('edit-p-name').value.trim();
+  const category = document.getElementById('edit-p-category').value.trim();
+  const color = document.getElementById('edit-p-color').value.trim();
+  const price = parseInt(document.getElementById('edit-p-price').value) || 0;
+  const stock = parseInt(document.getElementById('edit-p-stock').value) || 0;
+  const description = document.getElementById('edit-p-desc').value.trim();
+
+  if (!name || !category) {
+    alert('請填寫商品名稱和類別');
+    return;
+  }
+
+  try {
+    const res = await adminFetch(`/api/admin/products/${currentEditProductId}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, category, color, price, stock, description})
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('商品更新成功！');
+      document.getElementById('edit-product-modal').style.display = 'none';
+      loadProductsAdmin();
+    } else {
+      alert('更新失敗: ' + (data.message || ''));
+    }
+  } catch(e) {
+    alert('更新失敗');
   }
 }
 
