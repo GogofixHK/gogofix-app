@@ -1068,6 +1068,36 @@
  gap: 10px;
  }
  .repair-note-icon { font-size: 20px; flex-shrink: 0; }
+
+/* 零件選項卡片 */
+.part-option-card {
+ background: var(--card-solid);
+ border: 1.5px solid var(--separator);
+ border-radius: var(--radius-sm);
+ padding: 14px;
+ cursor: pointer;
+ transition: all var(--transition-fast);
+}
+.part-option-card:hover {
+ border-color: var(--accent);
+ box-shadow: var(--shadow-sm);
+}
+.part-option-card.selected {
+ border-color: var(--green);
+ background: var(--green-light);
+ box-shadow: 0 0 0 1px var(--green);
+}
+.part-option-card.selected .part-radio svg {
+ color: var(--green);
+}
+.part-radio {
+ flex-shrink: 0;
+ display: flex;
+ align-items: center;
+ color: var(--text3);
+ transition: color var(--transition-fast);
+}
+
 </style>
 </head>
 <body>
@@ -1287,9 +1317,19 @@
 
  <div class="form-group">
  <label class="form-label">維修項目 *</label>
- <select class="form-input" id="so-service" onchange="updateServicePrice()">
+ <select class="form-input" id="so-service" onchange="onServiceChange()">
  <option value="">請選擇維修項目</option>
  </select>
+ </div>
+
+ <!-- 零件選項區 -->
+ <div id="so-part-options-area" style="display:none;">
+ <div class="form-group">
+ <label class="form-label">零件選擇 *</label>
+ <div id="so-part-options" style="display:flex; flex-direction:column; gap:8px;">
+ <!-- 動態載入 -->
+ </div>
+ </div>
  </div>
 
  <div class="form-group">
@@ -1939,15 +1979,83 @@ function selectPayment(el, method) {
  selectedPayment = method;
 }
 
-function updateServicePrice() {
+// 當前選擇的零件選項
+let selectedPartOption = null;
+
+async function onServiceChange() {
  const sel = document.getElementById('so-service');
  const opt = sel.options[sel.selectedIndex];
- if (opt && opt.dataset.min) {
- document.getElementById('so-price').textContent = `HK$ ${opt.dataset.min} - ${opt.dataset.max}`;
- } else {
+ const serviceId = sel.value;
+ const area = document.getElementById('so-part-options-area');
+ const partEl = document.getElementById('so-part-options');
+ 
+ selectedPartOption = null;
+ 
+ if (!serviceId || !opt) {
+ area.style.display = 'none';
  document.getElementById('so-price').textContent = 'HK$ --';
+ return;
+ }
+
+ // 載入該服務的零件選項
+ try {
+ const res = await fetch(API + '/api/repair-part-options/' + serviceId);
+ const options = await res.json();
+ 
+ if (options.length === 0) {
+ area.style.display = 'none';
+ // 顯示默認價格範圍
+ document.getElementById('so-price').textContent = `HK$ ${opt.dataset.min} - ${opt.dataset.max}`;
+ return;
+ }
+ 
+ area.style.display = 'block';
+ let html = '';
+ options.forEach((o, idx) => {
+ html += `
+ <div class="part-option-card" onclick="selectPartOption(this, ${o.id}, '${o.name.replace(/'/g,"\\'")}', ${o.price})" data-id="${o.id}">
+ <div style="display:flex; align-items:center; gap:12px;">
+ <div class="part-radio" id="part-radio-${o.id}">
+ <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
+ </div>
+ <div style="flex:1;">
+ <div style="font-size:14px; font-weight:600;">${o.name}</div>
+ ${o.description ? `<div style="font-size:12px; color:var(--text2); margin-top:2px;">${o.description}</div>` : ''}
+ </div>
+ <div style="font-size:16px; font-weight:800; color:var(--accent);">HK$ ${o.price}</div>
+ </div>
+ </div>`;
+ });
+ partEl.innerHTML = html;
+ 
+ // 默認選中第一個
+ const firstCard = partEl.querySelector('.part-option-card');
+ if (firstCard) {
+ firstCard.click();
+ }
+ } catch(e) {
+ area.style.display = 'none';
+ document.getElementById('so-price').textContent = `HK$ ${opt.dataset.min} - ${opt.dataset.max}`;
  }
 }
+
+function selectPartOption(el, id, name, price) {
+ // 清除其他選中
+ document.querySelectorAll('.part-option-card').forEach(c => c.classList.remove('selected'));
+ document.querySelectorAll('.part-radio').forEach(r => r.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/></svg>');
+ 
+ // 標記當前選中
+ el.classList.add('selected');
+ const radio = document.getElementById('part-radio-' + id);
+ if (radio) {
+ radio.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#34c759" stroke-width="1.5"/><circle cx="10" cy="10" r="5" fill="#34c759"/></svg>';
+ }
+ 
+ selectedPartOption = { id, name, price };
+ document.getElementById('so-price').textContent = `HK$ ${price}`;
+}
+
+function updateServicePrice() {}
 
 function openServiceOrderModal() {
  document.getElementById('service-order-modal').classList.add('show');
@@ -2030,6 +2138,13 @@ async function submitServiceOrder() {
  return;
  }
 
+ // 檢查是否選擇了零件
+ const partOptionArea = document.getElementById('so-part-options-area');
+ if (partOptionArea.style.display !== 'none' && !selectedPartOption) {
+ showToast('請選擇零件方案');
+ return;
+ }
+
  const brand = document.getElementById('so-brand').value.trim();
  const model = document.getElementById('so-model').value.trim();
  const deviceOther = document.getElementById('so-device-other').value.trim();
@@ -2037,7 +2152,7 @@ async function submitServiceOrder() {
  const issue = document.getElementById('so-issue').value.trim();
  const email = document.getElementById('so-email').value.trim();
  const note = document.getElementById('so-note').value.trim();
- const priceMin = parseInt(sel.options[sel.selectedIndex]?.dataset.min) || 0;
+ const price = selectedPartOption ? selectedPartOption.price : (parseInt(sel.options[sel.selectedIndex]?.dataset.min) || 0);
 
  try {
  const res = await fetch(API + '/api/service-orders', {
@@ -2052,8 +2167,10 @@ async function submitServiceOrder() {
  device_model: model || deviceOther,
  service_id: parseInt(serviceId),
  service_name: serviceName,
+ part_option_id: selectedPartOption ? selectedPartOption.id : 0,
+ part_option_name: selectedPartOption ? selectedPartOption.name : '',
  issue_description: issue,
- estimated_price: priceMin,
+ estimated_price: price,
  preferred_time: preferredTime,
  payment_method: selectedPayment,
  note: note
@@ -2066,7 +2183,8 @@ async function submitServiceOrder() {
  const timeStr = new Date(preferredTime).toLocaleString('zh-HK', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 
  // WhatsApp 通知老闆
- const waMsg = `*新維修訂單！*\n\n訂單號：${data.order_no}\n客戶：${name}\n電話：${phone}\n項目：${serviceName}\n設備：${device || '未填'}\n問題：${issue || '未填'}\n預估：HK$${priceMin}\n時間：${timeStr}\n付款：${payLabel[selectedPayment]}\n備註：${note || '無'}`;
+ const partInfo = selectedPartOption ? ` (${selectedPartOption.name})` : '';
+ const waMsg = `*新維修訂單！*\n\n訂單號：${data.order_no}\n客戶：${name}\n電話：${phone}\n項目：${serviceName}${partInfo}\n設備：${device || '未填'}\n問題：${issue || '未填'}\n預估：HK$${price}\n時間：${timeStr}\n付款：${payLabel[selectedPayment]}\n備註：${note || '無'}`;
  window.open(`https://wa.me/85252382777?text=${encodeURIComponent(waMsg)}`, '_blank');
 
  showToast('落單成功！');
@@ -2074,10 +2192,8 @@ async function submitServiceOrder() {
 
  // 顯示付款 QR 碼（非現金）
  if (selectedPayment !== 'cash') {
- showPaymentQR(data.order_no, selectedPayment, priceMin, serviceName, timeStr);
+ showPaymentQR(data.order_no, selectedPayment, price, serviceName, timeStr);
  }
-
- // 重置表單
 
  // 重置表單
  ['so-name','so-phone','so-email','so-issue','so-note','so-device-other','so-preferred-time','so-member-phone','so-member-password'].forEach(id => {
@@ -2091,6 +2207,9 @@ async function submitServiceOrder() {
  document.getElementById('so-other-device-group').style.display = 'none';
  document.getElementById('so-model').parentElement.style.display = 'block';
  document.getElementById('so-member-info').style.display = 'none';
+ document.getElementById('so-part-options-area').style.display = 'none';
+ document.getElementById('so-part-options').innerHTML = '';
+ selectedPartOption = null;
  currentMemberId = 0;
  } else {
  showToast('落單失敗，請稍後再試');

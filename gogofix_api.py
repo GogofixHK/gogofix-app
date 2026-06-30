@@ -151,6 +151,20 @@ def init_db():
     )
     """)
     
+    # 維修零件選項表
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS repair_part_options (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        service_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        price INTEGER DEFAULT 0,
+        description TEXT DEFAULT '',
+        sort_order INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        FOREIGN KEY (service_id) REFERENCES repair_services(id)
+    )
+    """)
+    
     # 維修服務訂單表（客戶下單）
     c.execute("""
     CREATE TABLE IF NOT EXISTS service_orders (
@@ -164,6 +178,8 @@ def init_db():
         device_model TEXT DEFAULT '',
         service_id INTEGER DEFAULT 0,
         service_name TEXT DEFAULT '',
+        part_option_id INTEGER DEFAULT 0,
+        part_option_name TEXT DEFAULT '',
         issue_description TEXT DEFAULT '',
         estimated_price INTEGER DEFAULT 0,
         preferred_time TEXT DEFAULT '',
@@ -178,12 +194,9 @@ def init_db():
 
     # 兼容舊資料庫：service_orders 加新欄位
     so_cols = [r[1] for r in c.execute("PRAGMA table_info(service_orders)").fetchall()]
-    if 'member_id' not in so_cols:
-        c.execute("ALTER TABLE service_orders ADD COLUMN member_id INTEGER DEFAULT 0")
-    if 'preferred_time' not in so_cols:
-        c.execute("ALTER TABLE service_orders ADD COLUMN preferred_time TEXT DEFAULT ''")
-    if 'is_read' not in so_cols:
-        c.execute("ALTER TABLE service_orders ADD COLUMN is_read INTEGER DEFAULT 0")
+    for col_name in ['member_id', 'preferred_time', 'is_read', 'part_option_id', 'part_option_name']:
+        if col_name not in so_cols:
+            c.execute(f"ALTER TABLE service_orders ADD COLUMN {col_name} {'INTEGER DEFAULT 0' if 'id' in col_name else \"TEXT DEFAULT ''\"}")
 
     # 會員表
     c.execute("""
@@ -298,6 +311,50 @@ def init_db():
         for row in default_services:
             c.execute(
                 "INSERT INTO repair_services (name, device_type, price_min, price_max, description) VALUES (?,?,?,?,?)",
+                row
+            )
+    
+    # 插入預設維修零件選項
+    c.execute("SELECT COUNT(*) FROM repair_part_options")
+    if c.fetchone()[0] == 0:
+        default_part_options = [
+            # service_id, name, price, description, sort_order
+            # 換屏幕 (service_id=1)
+            (1, "國產 LCD 屏", 400, "經濟實惠，色彩表現良好，適合日常使用", 1),
+            (1, "原裝 OLED 屏", 700, "原廠級別 OLED，色彩鮮豔，對比度高，還原最佳顯示效果", 2),
+            (1, "原廠翻新屏", 550, "原廠屏幕翻新，質量可靠，性價比之選", 3),
+            # 換電池 (service_id=2)
+            (2, "副廠電池", 300, "高性價比副廠電池，續航表現穩定", 1),
+            (2, "原廠電池", 450, "Apple 原廠認證電池，健康度100%，續航最佳", 2),
+            # 水浸維修 (service_id=3)
+            (3, "基礎清洗", 400, "主板清洗烘乾，基礎檢測修復", 1),
+            (3, "深度維修", 700, "超聲波清洗 + 芯片級維修，更全面檢測", 2),
+            # 換充電口 (service_id=4)
+            (4, "副廠充電口", 350, "副廠配件，功能正常", 1),
+            (4, "原廠充電口", 550, "原廠充電接口模組，穩定耐用", 2),
+            # 換鏡頭 (service_id=5)
+            (5, "副廠鏡頭", 400, "副廠鏡頭模組，成像清晰", 1),
+            (5, "原廠鏡頭", 650, "原廠鏡頭模組，成像品質最佳", 2),
+            # 換聽筒/喇叭 (service_id=6)
+            (6, "副廠配件", 250, "副廠聽筒/喇叭，功能正常", 1),
+            (6, "原廠配件", 420, "原廠聽筒/喇叭模組，音質最佳", 2),
+            # 換顯示屏 (service_id=7) - 平板
+            (7, "副廠 LCD 屏", 600, "經濟實惠，適合日常使用", 1),
+            (7, "原廠屏", 1100, "原廠級別顯示屏，色彩精準", 2),
+            # Switch 維修 (service_id=8)
+            (8, "Joy-Con 維修", 400, "搖桿飄移修復、按鍵更換", 1),
+            (8, "屏幕更換", 650, "更換 Switch 屏幕總成", 2),
+            (8, "主板維修", 800, "芯片級維修，不開機、充電問題等", 3),
+            # 換玻璃背蓋 (service_id=9)
+            (9, "副廠玻璃背蓋", 350, "副廠玻璃背蓋，外觀一致", 1),
+            (9, "原廠玻璃背蓋", 550, "原廠玻璃背蓋，質感最佳", 2),
+            # 軟體維修/解鎖 (service_id=10)
+            (10, "標準維修", 200, "系統修復、軟體問題處理", 1),
+            (10, "深度解鎖", 380, "忘記密碼、iCloud 解鎖等進階服務", 2),
+        ]
+        for row in default_part_options:
+            c.execute(
+                "INSERT INTO repair_part_options (service_id, name, price, description, sort_order) VALUES (?,?,?,?,?)",
                 row
             )
     c.execute("SELECT COUNT(*) FROM recycle_prices")
@@ -1082,6 +1139,54 @@ def update_repair_service(service_id: int, service: dict, request: Request):
     db.close()
     return {"success": True}
 
+# ============ 維修零件選項 API ============
+
+@app.get("/api/repair-part-options/{service_id}")
+def get_part_options(service_id: int):
+    """獲取某個維修服務的零件選項"""
+    db = get_db()
+    rows = db.execute(
+        "SELECT * FROM repair_part_options WHERE service_id=? AND is_active=1 ORDER BY sort_order",
+        (service_id,)
+    ).fetchall()
+    db.close()
+    return [dict(r) for r in rows]
+
+@app.post("/api/admin/repair-part-options/add")
+def add_part_option(data: dict, request: Request):
+    require_admin(request)
+    db = get_db()
+    db.execute(
+        "INSERT INTO repair_part_options (service_id, name, price, description, sort_order) VALUES (?,?,?,?,?)",
+        (data.get("service_id"), data.get("name"), data.get("price", 0),
+         data.get("description", ""), data.get("sort_order", 0))
+    )
+    db.commit()
+    db.close()
+    return {"success": True}
+
+@app.put("/api/admin/repair-part-options/{option_id}")
+def update_part_option(option_id: int, data: dict, request: Request):
+    require_admin(request)
+    db = get_db()
+    db.execute(
+        "UPDATE repair_part_options SET name=?, price=?, description=?, sort_order=?, is_active=? WHERE id=?",
+        (data.get("name"), data.get("price", 0), data.get("description", ""),
+         data.get("sort_order", 0), data.get("is_active", 1), option_id)
+    )
+    db.commit()
+    db.close()
+    return {"success": True}
+
+@app.delete("/api/admin/repair-part-options/{option_id}")
+def delete_part_option(option_id: int, request: Request):
+    require_admin(request)
+    db = get_db()
+    db.execute("UPDATE repair_part_options SET is_active=0 WHERE id=?", (option_id,))
+    db.commit()
+    db.close()
+    return {"success": True}
+
 # ============ 維修服務下單 API ============
 
 class ServiceOrderCreate(BaseModel):
@@ -1093,6 +1198,8 @@ class ServiceOrderCreate(BaseModel):
     device_model: str = ""
     service_id: int = 0
     service_name: str = ""
+    part_option_id: int = 0
+    part_option_name: str = ""
     issue_description: str = ""
     estimated_price: int = 0
     preferred_time: str = ""
@@ -1114,11 +1221,12 @@ def create_service_order(order: ServiceOrderCreate):
     cur = db.execute(
         """INSERT INTO service_orders 
         (order_no, customer_name, customer_phone, customer_email, member_id, device_type, device_model, 
-         service_id, service_name, issue_description, estimated_price, preferred_time, payment_method, 
+         service_id, service_name, part_option_id, part_option_name, issue_description, estimated_price, preferred_time, payment_method, 
          payment_status, order_status, is_read, note, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (order_no, order.customer_name, order.customer_phone, order.customer_email,
          member_id, order.device_type, order.device_model, order.service_id, order.service_name,
+         order.part_option_id, order.part_option_name,
          order.issue_description, order.estimated_price, order.preferred_time, order.payment_method,
          "unpaid", "pending", 0, order.note, now)
     )
