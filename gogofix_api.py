@@ -423,11 +423,11 @@ def init_db():
     c.execute("SELECT COUNT(*) FROM products")
     if c.fetchone()[0] == 0:
         switch_colors = [
-            ("Nintendo Switch Lite", "game_console", "黃色", 840, 10, "功能正常，成色95成新，原裝正貨"),
-            ("Nintendo Switch Lite", "game_console", "珊瑚藍", 840, 10, "功能正常，成色95成新，原裝正貨"),
-            ("Nintendo Switch Lite", "game_console", "珊瑚紅", 840, 10, "功能正常，成色95成新，原裝正貨"),
-            ("Nintendo Switch Lite", "game_console", "青綠色", 840, 10, "功能正常，成色95成新，原裝正貨"),
-            ("Nintendo Switch Lite", "game_console", "灰色", 840, 9, "功能正常，成色95成新，原裝正貨"),
+            ("Nintendo Switch Lite", "game_console", "黃色", 840, 10, "陽光亮黃配色，活力滿分！Nintendo Switch Lite 輕巧便攜，僅275g一手掌握隨時開玩。5.5吋觸控螢幕，兼容所有手提模式 Switch 遊戲。95成新原裝正貨，已全面檢測功能正常，附原廠充電器，即買即玩！"),
+            ("Nintendo Switch Lite", "game_console", "珊瑚藍", 840, 10, "清新珊瑚藍配色，海洋系風格人氣之選。Switch Lite 專為手提模式設計，機身輕薄一體成型，按鍵手感極佳。95成新原裝正貨，功能檢測全部通過，附原廠充電器，適合日常攜帶隨時開玩。"),
+            ("Nintendo Switch Lite", "game_console", "珊瑚紅", 840, 10, "甜美珊瑚紅配色，個性張揚又可愛！Switch Lite 採用一體化簡約設計，5.5吋鮮艷螢幕，兼容所有手提模式遊戲。95成新原裝正貨，經專業檢測功能正常，附原廠充電器，自用送禮皆宜。"),
+            ("Nintendo Switch Lite", "game_console", "青綠色", 840, 10, "清新薄荷青綠配色，文青首選！Nintendo Switch Lite 任天堂專為手提遊玩打造的輕量版主機，僅275g極致輕薄。95成新原裝正貨，功能全面檢測OK，附原廠充電器，隨時隨地享受遊戲樂趣。"),
+            ("Nintendo Switch Lite", "game_console", "灰色", 840, 9, "經典低調灰色，沉穩百搭之選。Switch Lite 機身一體成型手感紮實，5.5吋畫質細膩。95成新原裝正貨，所有功能經專業檢測正常運作，附原廠充電器，適合所有年齡層玩家。"),
         ]
         c.executemany(
             "INSERT INTO products (name, category, color, price, stock, description) VALUES (?,?,?,?,?,?)",
