@@ -424,11 +424,89 @@ function adminLogout() {
     </div>
     <div class="table-card">
       <table>
-        <thead><tr><th>ID</th><th>名稱</th><th>類別</th><th>顏色</th><th>價格</th><th>庫存</th><th>狀態</th><th>操作</th></tr></thead>
+        <thead><tr><th>圖片</th><th>ID</th><th>名稱</th><th>類別</th><th>顏色</th><th>價格</th><th>庫存</th><th>操作</th></tr></thead>
         <tbody id="products-tbody"><tr><td colspan="8">載入中...</td></tr></tbody>
       </table>
     </div>
   </div>
+
+  <!-- 圖片上傳彈窗 -->
+  <div id="upload-image-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:300; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:16px; padding:30px; width:90%; max-width:400px;">
+      <h3 style="margin-bottom:16px;">🖼️ 上傳商品圖片</h3>
+      <div style="margin-bottom:8px; font-size:13px; color:#666;">商品 ID: <strong id="upload-product-id"></strong></div>
+      <div style="margin-bottom:8px; font-size:13px; color:#666;">名稱: <strong id="upload-product-name"></strong></div>
+      <div style="margin-bottom:16px; padding:20px; border:2px dashed #ddd; border-radius:12px; text-align:center; cursor:pointer;" onclick="document.getElementById('image-file-input').click()">
+        <div style="font-size:36px; margin-bottom:8px;">📸</div>
+        <div style="font-size:13px; color:#999;">點擊選擇圖片</div>
+        <div style="font-size:11px; color:#bbb;">支援 JPG / PNG / WebP</div>
+        <img id="upload-preview" style="display:none; max-width:100%; max-height:200px; margin-top:12px; border-radius:8px;">
+      </div>
+      <input type="file" id="image-file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;" onchange="previewImage(event)">
+      <div id="upload-status" style="font-size:12px; color:#999; margin-bottom:12px; text-align:center;"></div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-red" style="flex:1;" onclick="doUploadImage()">上傳</button>
+        <button class="btn btn-gray" style="flex:1;" onclick="document.getElementById('upload-image-modal').style.display='none'">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  let currentUploadProductId = 0;
+  let currentUploadProductName = '';
+
+  function showUploadImage(id, name) {
+    currentUploadProductId = id;
+    currentUploadProductName = name;
+    document.getElementById('upload-product-id').textContent = id;
+    document.getElementById('upload-product-name').textContent = name;
+    document.getElementById('upload-preview').style.display = 'none';
+    document.getElementById('image-file-input').value = '';
+    document.getElementById('upload-status').textContent = '';
+    document.getElementById('upload-image-modal').style.display = 'flex';
+  }
+
+  function previewImage(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = document.getElementById('upload-preview');
+      img.src = ev.target.result;
+      img.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function doUploadImage() {
+    const file = document.getElementById('image-file-input').files[0];
+    if (!file) { document.getElementById('upload-status').textContent = '請選擇圖片'; return; }
+    const status = document.getElementById('upload-status');
+    status.textContent = '上傳中...';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await adminFetch(`/api/admin/products/${currentUploadProductId}/upload-image`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        status.innerHTML = '<span style="color:#28a745;">✅ 上傳成功！</span>';
+        setTimeout(() => {
+          document.getElementById('upload-image-modal').style.display = 'none';
+          loadProductsAdmin();
+        }, 1000);
+      } else {
+        status.innerHTML = `<span style="color:#e74c3c;">❌ ${data.message || '上傳失敗'}</span>`;
+      }
+    } catch(e) {
+      status.innerHTML = '<span style="color:#e74c3c;">❌ 網絡錯誤</span>';
+    }
+  }
+  </script>
 
   <!-- ========== 訂單管理 ========== -->
   <div class="admin-page" id="admin-orders">
@@ -742,15 +820,20 @@ async function loadProductsAdmin() {
     const products = await fetch('/api/products').then(r=>r.json());
     let html = '';
     products.forEach(p => {
+      const imgTag = p.image_url
+        ? `<img src="${p.image_url}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">`
+        : `<div style="width:40px;height:40px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#ccc;">📷</div>`;
       html += `<tr>
+        <td>${imgTag}</td>
         <td>${p.id}</td>
         <td>${p.name}</td>
         <td>${p.category}</td>
         <td>${p.color || '-'}</td>
         <td>HK$ ${p.price}</td>
         <td>${p.stock}</td>
-        <td><span class="status-tag ${p.status==='active'?'tag-confirmed':'tag-pending'}">${p.status}</span></td>
-        <td><button class="btn btn-gray" style="padding:4px 10px; font-size:12px;">編輯</button></td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-gray" style="padding:4px 10px; font-size:12px;" onclick="showUploadImage(${p.id}, '${p.name.replace(/'/g,"\\'")}')">🖼️ 圖片</button>
+        </td>
       </tr>`;
     });
     document.getElementById('products-tbody').innerHTML = html;
