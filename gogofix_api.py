@@ -494,6 +494,74 @@ def init_db():
             ("Xiaomi", "14 Ultra", "256GB", "good", 2300, "manual"),
             ("Xiaomi", "13T Pro", "256GB", "excellent", 1600, "manual"),
             ("Xiaomi", "13T Pro", "256GB", "good", 1300, "manual"),
+            # ===== iPad 系列 =====
+            # iPad Pro M4 (2024)
+            ("iPad", "iPad Pro 13 (M4, 2024)", "256GB", "excellent", 5300, "manual"),
+            ("iPad", "iPad Pro 13 (M4, 2024)", "256GB", "good", 4800, "manual"),
+            ("iPad", "iPad Pro 13 (M4, 2024)", "512GB", "excellent", 5800, "manual"),
+            ("iPad", "iPad Pro 13 (M4, 2024)", "512GB", "good", 5200, "manual"),
+            ("iPad", "iPad Pro 11 (M4, 2024)", "256GB", "excellent", 4200, "manual"),
+            ("iPad", "iPad Pro 11 (M4, 2024)", "256GB", "good", 3700, "manual"),
+            ("iPad", "iPad Pro 11 (M4, 2024)", "512GB", "excellent", 4800, "manual"),
+            ("iPad", "iPad Pro 11 (M4, 2024)", "512GB", "good", 4200, "manual"),
+            # iPad Pro M2 (2022)
+            ("iPad", "iPad Pro 12.9 (M2, 2022)", "128GB", "excellent", 3500, "manual"),
+            ("iPad", "iPad Pro 12.9 (M2, 2022)", "128GB", "good", 3000, "manual"),
+            ("iPad", "iPad Pro 12.9 (M2, 2022)", "256GB", "excellent", 4000, "manual"),
+            ("iPad", "iPad Pro 12.9 (M2, 2022)", "256GB", "good", 3400, "manual"),
+            ("iPad", "iPad Pro 11 (M2, 2022)", "128GB", "excellent", 2800, "manual"),
+            ("iPad", "iPad Pro 11 (M2, 2022)", "128GB", "good", 2400, "manual"),
+            ("iPad", "iPad Pro 11 (M2, 2022)", "256GB", "excellent", 3200, "manual"),
+            ("iPad", "iPad Pro 11 (M2, 2022)", "256GB", "good", 2700, "manual"),
+            # iPad Pro M1 (2021)
+            ("iPad", "iPad Pro 12.9 (M1, 2021)", "128GB", "excellent", 2900, "manual"),
+            ("iPad", "iPad Pro 12.9 (M1, 2021)", "128GB", "good", 2500, "manual"),
+            ("iPad", "iPad Pro 12.9 (M1, 2021)", "256GB", "excellent", 3300, "manual"),
+            ("iPad", "iPad Pro 12.9 (M1, 2021)", "256GB", "good", 2800, "manual"),
+            ("iPad", "iPad Pro 11 (M1, 2021)", "128GB", "excellent", 2300, "manual"),
+            ("iPad", "iPad Pro 11 (M1, 2021)", "128GB", "good", 1900, "manual"),
+            ("iPad", "iPad Pro 11 (M1, 2021)", "256GB", "excellent", 2700, "manual"),
+            ("iPad", "iPad Pro 11 (M1, 2021)", "256GB", "good", 2200, "manual"),
+            # iPad Air M2 (2024)
+            ("iPad", "iPad Air 11 (M2, 2024)", "128GB", "excellent", 2500, "manual"),
+            ("iPad", "iPad Air 11 (M2, 2024)", "128GB", "good", 2100, "manual"),
+            ("iPad", "iPad Air 11 (M2, 2024)", "256GB", "excellent", 2900, "manual"),
+            ("iPad", "iPad Air 11 (M2, 2024)", "256GB", "good", 2400, "manual"),
+            ("iPad", "iPad Air 13 (M2, 2024)", "128GB", "excellent", 3200, "manual"),
+            ("iPad", "iPad Air 13 (M2, 2024)", "128GB", "good", 2700, "manual"),
+            # iPad Air M1 (2022) / 第5代
+            ("iPad", "iPad Air (M1, 2022)", "64GB", "excellent", 1700, "manual"),
+            ("iPad", "iPad Air (M1, 2022)", "64GB", "good", 1400, "manual"),
+            ("iPad", "iPad Air (M1, 2022)", "256GB", "excellent", 2200, "manual"),
+            ("iPad", "iPad Air (M1, 2022)", "256GB", "good", 1800, "manual"),
+            # iPad Air (第4代, 2020)
+            ("iPad", "iPad Air (第4代, 2020)", "64GB", "excellent", 1200, "manual"),
+            ("iPad", "iPad Air (第4代, 2020)", "64GB", "good", 900, "manual"),
+            ("iPad", "iPad Air (第4代, 2020)", "256GB", "excellent", 1600, "manual"),
+            ("iPad", "iPad Air (第4代, 2020)", "256GB", "good", 1300, "manual"),
+            # iPad mini 6 (2021)
+            ("iPad", "iPad mini (第6代, 2021)", "64GB", "excellent", 2100, "manual"),
+            ("iPad", "iPad mini (第6代, 2021)", "64GB", "good", 1700, "manual"),
+            ("iPad", "iPad mini (第6代, 2021)", "256GB", "excellent", 2600, "manual"),
+            ("iPad", "iPad mini (第6代, 2021)", "256GB", "good", 2100, "manual"),
+            # iPad mini 5 (2019)
+            ("iPad", "iPad mini (第5代, 2019)", "64GB", "excellent", 800, "manual"),
+            ("iPad", "iPad mini (第5代, 2019)", "64GB", "good", 600, "manual"),
+            # iPad 入門款 (第10代, 2022)
+            ("iPad", "iPad (第10代, 2022)", "64GB", "excellent", 1400, "manual"),
+            ("iPad", "iPad (第10代, 2022)", "64GB", "good", 1100, "manual"),
+            ("iPad", "iPad (第10代, 2022)", "256GB", "excellent", 1900, "manual"),
+            ("iPad", "iPad (第10代, 2022)", "256GB", "good", 1500, "manual"),
+            # iPad 入門款 (第9代, 2021)
+            ("iPad", "iPad (第9代, 2021)", "64GB", "excellent", 1000, "manual"),
+            ("iPad", "iPad (第9代, 2021)", "64GB", "good", 750, "manual"),
+            ("iPad", "iPad (第9代, 2021)", "256GB", "excellent", 1400, "manual"),
+            ("iPad", "iPad (第9代, 2021)", "256GB", "good", 1100, "manual"),
+            # iPad 入門款 (第8代, 2020)
+            ("iPad", "iPad (第8代, 2020)", "32GB", "excellent", 600, "manual"),
+            ("iPad", "iPad (第8代, 2020)", "32GB", "good", 450, "manual"),
+            ("iPad", "iPad (第8代, 2020)", "128GB", "excellent", 900, "manual"),
+            ("iPad", "iPad (第8代, 2020)", "128GB", "good", 700, "manual"),
         ]
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         for row in default_prices:
