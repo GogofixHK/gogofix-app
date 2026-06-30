@@ -194,9 +194,16 @@ def init_db():
 
     # 兼容舊資料庫：service_orders 加新欄位
     so_cols = [r[1] for r in c.execute("PRAGMA table_info(service_orders)").fetchall()]
-    for col_name in ['member_id', 'preferred_time', 'is_read', 'part_option_id', 'part_option_name']:
-        if col_name not in so_cols:
-            c.execute(f"ALTER TABLE service_orders ADD COLUMN {col_name} {'INTEGER DEFAULT 0' if 'id' in col_name else \"TEXT DEFAULT ''\"}")
+    if 'member_id' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN member_id INTEGER DEFAULT 0")
+    if 'preferred_time' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN preferred_time TEXT DEFAULT ''")
+    if 'is_read' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN is_read INTEGER DEFAULT 0")
+    if 'part_option_id' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN part_option_id INTEGER DEFAULT 0")
+    if 'part_option_name' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN part_option_name TEXT DEFAULT ''")
 
     # 會員表
     c.execute("""
