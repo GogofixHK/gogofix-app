@@ -1275,29 +1275,57 @@
 <!-- ==================== 手機回收頁面 ==================== -->
 <div class="page" id="page-recycle">
   <h2 class="section-title">♻️ 手機回收</h2>
-  <div style="font-size:12px; color:#999; margin-bottom:14px;">即時參考價格 · 到店即收即付</div>
-  
-  <div class="form-group">
-    <label class="form-label">選擇品牌</label>
+  <div class="section-sub">即時參考價格 · 到店即收即付</div>
+
+  <!-- 步驟1：選擇品牌 -->
+  <div style="background:var(--card-solid); border-radius:var(--radius-md); padding:20px; margin-bottom:16px; border:1px solid var(--separator);">
+    <div style="font-size:14px; font-weight:800; color:var(--text); margin-bottom:12px; letter-spacing:-0.2px;">選擇品牌</div>
     <div class="color-select" id="recycle-brand-select">
       <div class="color-option selected" onclick="selectRecycleBrand(this, '')">全部</div>
       <div class="color-option" onclick="selectRecycleBrand(this, 'Apple')">🍎 Apple</div>
       <div class="color-option" onclick="selectRecycleBrand(this, 'Samsung')">📱 Samsung</div>
       <div class="color-option" onclick="selectRecycleBrand(this, 'Huawei')">🔵 Huawei</div>
       <div class="color-option" onclick="selectRecycleBrand(this, 'Xiaomi')">🟠 Xiaomi</div>
+      <div class="color-option" onclick="selectRecycleBrand(this, 'OPPO')">🟢 OPPO</div>
+      <div class="color-option" onclick="selectRecycleBrand(this, 'Honor')">🔷 Honor</div>
     </div>
   </div>
-  
-  <div class="form-group">
-    <label class="form-label">搜尋型號</label>
-    <input type="text" class="form-input" id="recycle-search" placeholder="例如：iPhone 14、S23 Ultra" oninput="searchRecyclePrice()">
+
+  <!-- 步驟2：選擇型號 -->
+  <div id="recycle-model-select-area" style="background:var(--card-solid); border-radius:var(--radius-md); padding:20px; margin-bottom:16px; border:1px solid var(--separator);">
+    <div style="font-size:14px; font-weight:800; color:var(--text); margin-bottom:12px; letter-spacing:-0.2px;">選擇型號</div>
+    <div class="color-select" id="recycle-model-select" style="flex-wrap:wrap;">
+      <div style="font-size:13px; color:var(--text2); padding:8px 0;">請先選擇品牌</div>
+    </div>
   </div>
-  
-  <div id="recycle-price-list" style="margin-bottom:20px;"></div>
-  
-  <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
-  
-  <h3 style="font-size:15px; font-weight:900; margin-bottom:12px;">📋 我要賣手機</h3>
+
+  <!-- 步驟3：機身狀況 -->
+  <div style="background:var(--card-solid); border-radius:var(--radius-md); padding:20px; margin-bottom:16px; border:1px solid var(--separator);">
+    <div style="font-size:14px; font-weight:800; color:var(--text); margin-bottom:12px; letter-spacing:-0.2px;">機身狀況</div>
+    <div class="color-select" id="recycle-condition-select">
+      <div class="color-option" onclick="selectRecycleCondition2(this, 'excellent')">全新/極佳</div>
+      <div class="color-option selected" onclick="selectRecycleCondition2(this, 'good')">良好</div>
+      <div class="color-option" onclick="selectRecycleCondition2(this, 'fair')">一般/有損痕</div>
+    </div>
+  </div>
+
+  <!-- 步驟4：容量+價格顯示 -->
+  <div id="recycle-price-display" style="background:var(--card-solid); border-radius:var(--radius-md); padding:20px; margin-bottom:16px; border:1px solid var(--separator); display:none;">
+    <div style="font-size:14px; font-weight:800; color:var(--text); margin-bottom:4px; letter-spacing:-0.2px;" id="recycle-selected-model-title"></div>
+    <div style="font-size:12px; color:var(--text2); margin-bottom:16px;" id="recycle-condition-label"></div>
+    <div id="recycle-capacity-list"></div>
+  </div>
+
+  <!-- 空狀態 -->
+  <div id="recycle-empty-state" style="text-align:center; padding:40px 20px; display:none;">
+    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--text3);margin-bottom:16px;"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M3 10h18"/></svg>
+    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;">暫無此型號價格</div>
+    <div style="font-size:13px;color:var(--text2);">請嘗試其他型號或 WhatsApp 查詢</div>
+  </div>
+
+  <hr style="margin: 24px 0;">
+
+  <h3 style="font-size:16px; font-weight:900; margin-bottom:12px;">我要賣手機</h3>
   <div class="form-group">
     <label class="form-label">您的姓名 *</label>
     <input type="text" class="form-input" id="recycle-name" placeholder="請輸入姓名">
@@ -1319,7 +1347,7 @@
     </div>
   </div>
   <div class="form-group">
-    <label class="form-label">期望價格（可选）</label>
+    <label class="form-label">期望價格（可選）</label>
     <input type="text" class="form-input" id="recycle-expect-price" placeholder="例如：3000">
   </div>
   <button class="btn-primary" onclick="submitRecycleOrder()">提交回收申請 ♻️</button>
@@ -2443,91 +2471,128 @@ async function submitOrder() {
 // ============ 手機回收功能 ============
 let currentRecycleCondition = 'good';
 let currentRecycleBrand = '';
+let currentRecycleModel = '';
+let allRecyclePrices = [];
 
 function selectRecycleBrand(el, brand) {
   document.querySelectorAll('#recycle-brand-select .color-option').forEach(e => e.classList.remove('selected'));
   el.classList.add('selected');
   currentRecycleBrand = brand;
-  loadRecyclePrices();
+  currentRecycleModel = '';
+  document.getElementById('recycle-price-display').style.display = 'none';
+  document.getElementById('recycle-empty-state').style.display = 'none';
+  loadRecycleModels();
+}
+
+function selectRecycleModel2(el, model) {
+  document.querySelectorAll('#recycle-model-select .color-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  currentRecycleModel = model;
+  showRecyclePrices();
+}
+
+function selectRecycleCondition2(el, condition) {
+  document.querySelectorAll('#recycle-condition-select .color-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  currentRecycleCondition = condition;
+  if (currentRecycleModel) showRecyclePrices();
+}
+
+async function loadRecycleModels() {
+  const el = document.getElementById('recycle-model-select');
+  if (!el) return;
+
+  if (!currentRecycleBrand) {
+    el.innerHTML = '<div style="font-size:13px; color:var(--text2); padding:8px 0;">請先選擇品牌</div>';
+    return;
+  }
+
+  el.innerHTML = '<div style="font-size:13px; color:var(--text2); padding:8px 0;">載入中...</div>';
+
+  try {
+    const url = API + '/api/recycle/prices?brand=' + encodeURIComponent(currentRecycleBrand);
+    const res = await fetch(url);
+    allRecyclePrices = await res.json();
+
+    // 提取唯一型號列表（去重）
+    const models = [...new Set(allRecyclePrices.map(p => p.model))];
+
+    if (models.length === 0) {
+      el.innerHTML = '<div style="font-size:13px; color:var(--text2); padding:8px 0;">暫無此品牌型號</div>';
+      return;
+    }
+
+    el.innerHTML = models.map(m =>
+      `<div class="color-option" onclick="selectRecycleModel2(this, '${m}')">${m}</div>`
+    ).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:13px; color:var(--red); padding:8px 0;">載入失敗</div>';
+  }
+}
+
+function showRecyclePrices() {
+  const display = document.getElementById('recycle-price-display');
+  const empty = document.getElementById('recycle-empty-state');
+  const list = document.getElementById('recycle-capacity-list');
+  const title = document.getElementById('recycle-selected-model-title');
+  const label = document.getElementById('recycle-condition-label');
+
+  if (!currentRecycleModel || !currentRecycleBrand) {
+    display.style.display = 'none';
+    if (empty) empty.style.display = 'none';
+    return;
+  }
+
+  // 過濾出所選型號的價格
+  const modelPrices = allRecyclePrices.filter(p =>
+    p.model === currentRecycleModel && p.condition_level === currentRecycleCondition
+  ).sort((a, b) => {
+    // 按容量排序：64 < 128 < 256 < 512
+    const getCap = s => parseInt(s) || 0;
+    return getCap(a.capacity) - getCap(b.capacity);
+  });
+
+  if (modelPrices.length === 0) {
+    display.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+
+  title.textContent = currentRecycleBrand + ' ' + currentRecycleModel;
+  const condLabels = { excellent: '全新/極佳', good: '良好', fair: '一般' };
+  label.textContent = condLabels[currentRecycleCondition] + ' · 回收價格';
+
+  // 顯示容量卡片
+  list.innerHTML = modelPrices.map(p => {
+    const isHigh = p.price_hkd >= 3000;
+    const isMid = p.price_hkd >= 1000;
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--separator); cursor:pointer;" onclick="fillRecycleModel('${currentRecycleModel} ${p.capacity}')">
+        <div>
+          <div style="font-weight:700; font-size:15px;">${p.capacity}</div>
+          <div style="font-size:11px; color:var(--text3); margin-top:2px;">${currentRecycleBrand} ${currentRecycleModel}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:22px; font-weight:900; color:${isHigh?'#28a745':isMid?'#1a1a1a':'var(--text2)'};">HK$ ${p.price_hkd.toLocaleString()}</div>
+          <div style="font-size:11px; color:var(--text3);">${condLabels[currentRecycleCondition]}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  display.style.display = 'block';
+  if (empty) empty.style.display = 'none';
+}
+
+function fillRecycleModel(model) {
+  document.getElementById('recycle-model').value = model;
+  document.getElementById('recycle-model').scrollIntoView({behavior:'smooth'});
 }
 
 function selectRecycleCondition(el, condition) {
   document.querySelectorAll('#page-recycle .color-select .color-option').forEach(e => e.classList.remove('selected'));
   el.classList.add('selected');
   currentRecycleCondition = condition;
-}
-
-async function loadRecyclePrices() {
-  const el = document.getElementById('recycle-price-list');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">載入價格中...</div>';
-  
-  try {
-    let url = API + '/api/recycle/prices';
-    if (currentRecycleBrand) url += `?brand=${encodeURIComponent(currentRecycleBrand)}`;
-    
-    const res = await fetch(url);
-    let prices = await res.json();
-    
-    // 過濾成色
-    prices = prices.filter(p => p.condition_level === currentRecycleCondition);
-    
-    // 搜尋過濾
-    const searchEl = document.getElementById('recycle-search');
-    const search = searchEl ? searchEl.value.trim().toLowerCase() : '';
-    if (search) {
-      prices = prices.filter(p => p.model.toLowerCase().includes(search));
-    }
-    
-    if (prices.length === 0) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暫無符合條件的回收價格</div></div>';
-      return;
-    }
-    
-    // 按品牌+型號分組
-    const grouped = {};
-    prices.forEach(p => {
-      const key = p.brand + '|' + p.model;
-      if (!grouped[key]) grouped[key] = {brand: p.brand, model: p.model, prices: []};
-      grouped[key].prices.push(p);
-    });
-    
-    let html = '';
-    Object.values(grouped).forEach(g => {
-      const conditionLabels = {'excellent':'全新/極佳', 'good':'良好', 'fair':'一般'};
-      const priceInfo = g.prices.find(p => p.condition_level === currentRecycleCondition);
-      const price = priceInfo ? priceInfo.price_hkd : '議價';
-      const updated = priceInfo ? priceInfo.last_updated ? priceInfo.last_updated.slice(0,10) : '' : '';
-      
-      html += `
-        <div class="repair-result" style="cursor:pointer;" onclick="fillRecycleModel('${g.model}')">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-weight:900; font-size:15px;">${g.brand} ${g.model}</div>
-              <div style="font-size:12px; color:#999; margin-top:4px;">更新日期：${updated}</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:20px; font-weight:900; color:#25d366;">HK$ ${price}</div>
-              <div style="font-size:11px; color:#999;">${conditionLabels[currentRecycleCondition]} 回收價</div>
-            </div>
-          </div>
-        </div>
-      `;
-    });
-    
-    el.innerHTML = html;
-  } catch(e) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">載入失敗</div></div>';
-  }
-}
-
-function searchRecyclePrice() {
-  loadRecyclePrices();
-}
-
-function fillRecycleModel(model) {
-  document.getElementById('recycle-model').value = model;
-  showToast('已填入型號：' + model);
 }
 
 async function submitRecycleOrder() {
