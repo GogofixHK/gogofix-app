@@ -1043,6 +1043,14 @@ def home_page():
 def admin_page():
     return FileResponse(os.path.join(BASE_DIR, "templates/admin.html"))
 
+@app.get("/robots.txt")
+def robots_txt():
+    return FileResponse(os.path.join(BASE_DIR, "static", "robots.txt"), media_type="text/plain")
+
+@app.get("/sitemap.xml")
+def sitemap_xml():
+    return FileResponse(os.path.join(BASE_DIR, "static", "sitemap.xml"), media_type="application/xml")
+
 # ============ 新增商品 API（後台用）============
 class ProductAdd(BaseModel):
     name: str
