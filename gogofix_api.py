@@ -294,6 +294,26 @@ def init_db():
             ("維修減免 $80", "下次維修費用減免港幣$80", "discount", 80, 0.05, "#ff3b30", ""),
             ("謝謝參與", "感謝您的支持，下次再試！", "empty", 0, 0.15, "#aeaeb2", ""),
         ]
+
+        # 手机钢化保护膜
+        film_products = [
+            ("手机钢化膜", "accessory", "高清款", 60, 100, "大猩猩9H钢化玻璃，99%高透光率，保留原屏幕色彩。奈米疏油层，防指纹防污渍。2.5D弧边打磨，手感顺滑不刮手。自动排气吸附，贴膜简单无气泡。适用于大部分主流手机型号，到店免费贴膜。"),
+            ("手机钢化膜", "accessory", "防窥款", 90, 100, "大猩猩9H钢化玻璃，左右30°防窥视角，保护你的隐私。高透光基底，正面看屏幕依然清晰。奈米疏油层，防指纹防污渍。2.5D弧边打磨，到店免费贴膜。适用于大部分主流手机型号。"),
+        ]
+
+        # 手机钢化保护膜
+        film_products = [
+            ("手机钢化膜", "accessory", "高清款", 60, 100, "大猩猩9H钢化玻璃，99%高透光率，保留原屏幕色彩。奈米疏油层，防指纹防污渍。2.5D弧边打磨，手感顺滑不刮手。自动排气吸附，贴膜简单无气泡。适用于大部分主流手机型号，到店免费贴膜。"),
+            ("手机钢化膜", "accessory", "防窥款", 90, 100, "大猩猩9H钢化玻璃，左右30°防窥视角，保护你的隐私。高透光基底，正面看屏幕依然清晰。奈米疏油层，防指纹防污渍。2.5D弧边打磨，到店免费贴膜。适用于大部分主流手机型号。"),
+        ]
+        c.executemany(
+            "INSERT INTO products (name, category, color, price, stock, description) VALUES (?,?,?,?,?)",
+            film_products
+        )
+        c.executemany(
+            "INSERT INTO products (name, category, color, price, stock, description) VALUES (?,?,?,?)",
+            film_products
+        )
         for row in default_prizes:
             c.execute(
                 "INSERT INTO lucky_draw_prizes (name, description, prize_type, discount_amount, probability, color, emoji) VALUES (?,?,?,?,?,?,?)",
@@ -718,6 +738,16 @@ def init_db():
             ("Nintendo Switch Lite", "game_console", "青綠色", 840, 10, "清新薄荷青綠配色，文青首選！Nintendo Switch Lite 任天堂專為手提遊玩打造的輕量版主機，僅275g極致輕薄。95成新原裝正貨，功能全面檢測OK，附原廠充電器，隨時隨地享受遊戲樂趣。"),
             ("Nintendo Switch Lite", "game_console", "灰色", 840, 9, "經典低調灰色，沉穩百搭之選。Switch Lite 機身一體成型手感紮實，5.5吋畫質細膩。95成新原裝正貨，所有功能經專業檢測正常運作，附原廠充電器，適合所有年齡層玩家。"),
         ]
+
+        # 手机钢化保护膜
+        film_products = [
+            ("手机钢化膜", "accessory", "高清款", 60, 100, "大猩猩9H钢化玻璃，99%高透光率，保留原屏幕色彩。奈米疏油层，防指纹防污渍。2.5D弧边打磨，手感顺滑不刮手。自动排气吸附，贴膜简单无气泡。适用于大部分主流手机型号，到店免费贴膜。"),
+            ("手机钢化膜", "accessory", "防窥款", 90, 100, "大猩猩9H钢化玻璃，左右30°防窥视角，保护你的隐私。高透光基底，正面看屏幕依然清晰。奈米疏油层，防指纹防污渍。2.5D弧边打磨，到店免费贴膜。适用于大部分主流手机型号。"),
+        ]
+        c.executemany(
+            "INSERT INTO products (name, category, color, price, stock, description) VALUES (?,?,?,?,?)",
+            film_products
+        )
         c.executemany(
             "INSERT INTO products (name, category, color, price, stock, description) VALUES (?,?,?,?,?,?)",
             switch_colors
