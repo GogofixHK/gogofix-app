@@ -205,6 +205,17 @@ def init_db():
         c.execute("ALTER TABLE service_orders ADD COLUMN part_option_id INTEGER DEFAULT 0")
     if 'part_option_name' not in so_cols:
         c.execute("ALTER TABLE service_orders ADD COLUMN part_option_name TEXT DEFAULT ''")
+    # 郵寄維修相關欄位
+    if 'repair_mode' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN repair_mode TEXT DEFAULT 'shop'")
+    if 'customer_address' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN customer_address TEXT DEFAULT ''")
+    if 'customer_tracking_no' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN customer_tracking_no TEXT DEFAULT ''")
+    if 'shop_tracking_no' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN shop_tracking_no TEXT DEFAULT ''")
+    if 'return_courier' not in so_cols:
+        c.execute("ALTER TABLE service_orders ADD COLUMN return_courier TEXT DEFAULT ''")
 
     # 會員表
     c.execute("""
@@ -1458,6 +1469,9 @@ class ServiceOrderCreate(BaseModel):
     preferred_time: str = ""
     payment_method: str = "cash"
     note: str = ""
+    repair_mode: str = "shop"
+    customer_address: str = ""
+    return_courier: str = ""
 
 @app.post("/api/service-orders")
 def create_service_order(order: ServiceOrderCreate):
@@ -1475,13 +1489,13 @@ def create_service_order(order: ServiceOrderCreate):
         """INSERT INTO service_orders 
         (order_no, customer_name, customer_phone, customer_email, member_id, device_type, device_model, 
          service_id, service_name, part_option_id, part_option_name, issue_description, estimated_price, preferred_time, payment_method, 
-         payment_status, order_status, is_read, note, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+         payment_status, order_status, is_read, note, created_at, repair_mode, customer_address, return_courier)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (order_no, order.customer_name, order.customer_phone, order.customer_email,
          member_id, order.device_type, order.device_model, order.service_id, order.service_name,
          order.part_option_id, order.part_option_name,
          order.issue_description, order.estimated_price, order.preferred_time, order.payment_method,
-         "unpaid", "pending", 0, order.note, now)
+         "unpaid", "pending", 0, order.note, now, order.repair_mode, order.customer_address, order.return_courier)
     )
     order_id = cur.lastrowid
     db.commit()
@@ -1542,6 +1556,45 @@ def update_order_payment(order_id: int, data: dict, request: Request):
     db.commit()
     db.close()
     return {"success": True}
+
+@app.put("/api/admin/service-orders/{order_id}/tracking")
+def update_order_tracking(order_id: int, data: dict, request: Request):
+    require_admin(request)
+    """管理員更新物流單號（店鋪寄回單號 + 客人寄出單號）"""
+    db = get_db()
+    if 'shop_tracking_no' in data:
+        db.execute("UPDATE service_orders SET shop_tracking_no=? WHERE id=?", (data['shop_tracking_no'], order_id))
+    if 'customer_tracking_no' in data:
+        db.execute("UPDATE service_orders SET customer_tracking_no=? WHERE id=?", (data['customer_tracking_no'], order_id))
+    db.commit()
+    db.close()
+    return {"success": True}
+
+@app.get("/api/service-orders/{order_no}")
+def get_service_order_by_no(order_no: str):
+    """客人用訂單號查詢維修進度（無需登入）"""
+    db = get_db()
+    row = db.execute("SELECT * FROM service_orders WHERE order_no=?", (order_no,)).fetchone()
+    db.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="訂單不存在")
+    return dict(row)
+
+@app.put("/api/service-orders/{order_no}/customer-tracking")
+def customer_update_tracking(order_no: str, data: dict):
+    """客人補填寄出快遞單號（憑訂單號+電話驗證）"""
+    db = get_db()
+    phone = data.get("phone", "").strip()
+    tracking_no = data.get("tracking_no", "").strip()
+    if not phone or not tracking_no:
+        raise HTTPException(status_code=400, detail="請填寫電話和快遞單號")
+    row = db.execute("SELECT * FROM service_orders WHERE order_no=? AND customer_phone=?", (order_no, phone)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="訂單不存在或電話不匹配")
+    db.execute("UPDATE service_orders SET customer_tracking_no=? WHERE id=?", (tracking_no, row['id']))
+    db.commit()
+    db.close()
+    return {"success": True, "message": "快遞單號已更新"}
 
 # ============ 會員系統 API ============
 

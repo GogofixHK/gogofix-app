@@ -597,6 +597,23 @@ function adminLogout() {
     </div>
   </div>
 
+  <!-- 維修訂單管理 -->
+  <div class="admin-page" id="admin-serviceorders">
+    <div class="page-header">
+      <div class="page-title">🔧 維修訂單管理</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.7);" id="service-orders-count"></div>
+    </div>
+    <div class="table-card">
+      <table>
+        <thead><tr>
+          <th>訂單號</th><th>客戶</th><th>電話</th><th>項目</th><th>設備</th>
+          <th>方式</th><th>時間/地址</th><th>金額</th><th>付款</th><th>狀態</th><th>操作</th>
+        </tr></thead>
+        <tbody id="service-orders-tbody"><tr><td colspan="11" style="text-align:center;color:#999;">載入中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <!-- 新增商品彈窗 -->
@@ -658,39 +675,60 @@ async function loadServiceOrdersAdmin() {
     const res = await adminFetch('/api/admin/service-orders');
     const orders = await res.json();
     const tbody = document.getElementById('service-orders-tbody');
+    const countEl = document.getElementById('service-orders-count');
     if (!orders || orders.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">暫無訂單</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:#999;">暫無訂單</td></tr>';
+      if (countEl) countEl.textContent = '';
       return;
     }
-    const statusMap = {'pending':'待確認','confirmed':'已確認','repairing':'維修中','done':'已完成','cancelled':'已取消'};
+    if (countEl) countEl.textContent = `共 ${orders.length} 筆訂單`;
+    const statusMap = {'pending':'待確認','received':'已收件','confirmed':'已確認','repairing':'維修中','done':'維修完成','shipped':'已寄出','completed':'已完成','cancelled':'已取消'};
+    const statusColor = {'pending':'#fff3cd','received':'#cce5ff','confirmed':'#cce5ff','repairing':'#ffe0b2','done':'#d4edda','shipped':'#d1ecf1','completed':'#c3e6cb','cancelled':'#f8d7da'};
     const payMap = {'alipay':'支付寶','fps':'轉數快','octopus':'八達通','cash':'現金'};
     tbody.innerHTML = orders.map(o => {
-      const time = o.preferred_time ? new Date(o.preferred_time).toLocaleString('zh-HK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '未指定';
+      const isMail = o.repair_mode === 'mail';
+      const timeOrAddr = isMail
+        ? `<small style="color:#666;">📦 ${o.customer_address||'未填地址'}</small>`
+        : (o.preferred_time ? new Date(o.preferred_time).toLocaleString('zh-HK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '未指定');
       const payColor = o.payment_status === 'paid' ? '#28a745' : '#ff9500';
       const isNew = o.is_read == 0 ? 'font-weight:700;' : '';
+      const modeBadge = isMail
+        ? '<span style="padding:1px 6px;border-radius:4px;background:#e3f2fd;color:#1565c0;font-size:11px;">郵寄</span>'
+        : '<span style="padding:1px 6px;border-radius:4px;background:#f5f5f5;color:#666;font-size:11px;">到店</span>';
+      // 郵寄訂單顯示物流信息
+      let trackingInfo = '';
+      if (isMail) {
+        const custT = o.customer_tracking_no ? `<small>客寄：<a href="https://www.sf-express.com/hk/tc/dynamic/function/expresscheck/${o.customer_tracking_no}" target="_blank" style="color:#1565c0;">${o.customer_tracking_no}</a></small>` : '<small style="color:#999;">客寄：未填</small>';
+        const shopT = o.shop_tracking_no ? `<small>回寄：<a href="https://www.sf-express.com/hk/tc/dynamic/function/expresscheck/${o.shop_tracking_no}" target="_blank" style="color:#28a745;">${o.shop_tracking_no}</a></small>` : '<small style="color:#999;">回寄：未填</small>';
+        trackingInfo = `<div style="margin-top:4px;">${custT}<br>${shopT}</div>`;
+      }
       return `<tr style="${isNew}">
         <td>${o.order_no}${o.is_read==0?' 🆕':''}</td>
         <td>${o.customer_name}</td>
         <td><a href="https://wa.me/852${o.customer_phone}" target="_blank">${o.customer_phone}</a></td>
-        <td>${o.service_name||''}</td>
+        <td>${o.service_name||''}${o.part_option_name?'<br><small style="color:#666;">'+o.part_option_name+'</small>':''}</td>
         <td>${o.device_type||''} ${o.device_model||''}</td>
-        <td>${time}</td>
+        <td>${modeBadge}</td>
+        <td style="max-width:160px;">${timeOrAddr}${trackingInfo}</td>
         <td>HK$${o.estimated_price}</td>
         <td style="color:${payColor};font-weight:600;">${o.payment_status==='paid'?'已付款':'未付款'}<br><small>${payMap[o.payment_method]||o.payment_method}</small></td>
-        <td><span style="padding:2px 8px;border-radius:6px;background:${o.order_status==='done'?'#d4edda':o.order_status==='pending'?'#fff3cd':'#cce5ff'};font-size:12px;">${statusMap[o.order_status]||o.order_status}</span></td>
+        <td><span style="padding:2px 8px;border-radius:6px;background:${statusColor[o.order_status]||'#eee'};font-size:12px;">${statusMap[o.order_status]||o.order_status}</span></td>
         <td style="white-space:nowrap;">
           <select onchange="updateOrderStatus(${o.id},this.value)" style="font-size:11px;padding:2px 4px;margin-bottom:2px;">
             <option value="">改狀態</option>
             <option value="confirmed">確認</option>
+            ${isMail?'<option value="received">已收件</option>':''}
             <option value="repairing">維修中</option>
-            <option value="done">完成</option>
+            <option value="done">維修完成</option>
+            ${isMail?'<option value="shipped">已寄出</option><option value="completed">已完成</option>':''}
             <option value="cancelled">取消</option>
           </select>
-          <select onchange="updateOrderPayment(${o.id},this.value)" style="font-size:11px;padding:2px 4px;">
+          <select onchange="updateOrderPayment(${o.id},this.value)" style="font-size:11px;padding:2px 4px;margin-bottom:2px;">
             <option value="">改付款</option>
             <option value="paid">標記已付</option>
             <option value="unpaid">標記未付</option>
           </select>
+          ${isMail?`<input type="text" placeholder="回寄單號" value="${o.shop_tracking_no||''}" onchange="updateTracking(${o.id},this.value)" style="font-size:11px;padding:2px 4px;width:100px;margin-top:2px;">`:''}
         </td>
       </tr>`;
     }).join('');
@@ -716,6 +754,12 @@ async function updateOrderPayment(id, payment_status) {
   showToast('付款狀態已更新');
   loadServiceOrdersAdmin();
 }
+
+async function updateTracking(id, shopTrackingNo) {
+  await adminFetch(`/api/admin/service-orders/${id}/tracking`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({shop_tracking_no:shopTrackingNo})});
+  showToast('回寄單號已更新');
+}
+
 
 // ============ 新訂單輪詢 ============
 let lastOrderCount = 0;
