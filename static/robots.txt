@@ -3,4 +3,28 @@ Allow: /
 Disallow: /admin
 Disallow: /api/admin
 
+# Crawl-delay for all bots
+Crawl-delay: 5
+
 Sitemap: https://gogofixhk.com/sitemap.xml
+
+# Specific bot rules
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+
+User-agent: Baiduspider
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+
+User-agent: YandexBot
+Allow: /
+Disallow: /admin
+Disallow: /api/admin

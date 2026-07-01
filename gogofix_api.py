@@ -4,10 +4,11 @@ GoGofix 手機維修專門店 - 後端 API
 """
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 import os
 import requests
@@ -27,6 +28,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# SEO 優化中間件：添加緩存頭、安全頭、壓縮支持
+class SEOMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        # 靜態資源緩存
+        if path.startswith("/static/") or path.endswith((".png", ".jpg", ".jpeg", ".svg", ".ico", ".css", ".js", ".woff2")):
+            response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
+        elif path == "/" or path == "/index.html":
+            response.headers["Cache-Control"] = "public, max-age=3600"
+        # 安全頭
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+app.add_middleware(SEOMiddleware)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 在 Docker 中使用 /data 目錄存儲資料庫，本地使用當前目錄
