@@ -2132,7 +2132,7 @@
 </div>
 
 <!-- 浮動聊天按鈕 -->
-<div class="chat-float-btn" id="chat-float-btn" onclick="openChatBot()">
+<div class="chat-float-btn" id="chat-float-btn">
  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
 </div>
 
@@ -3721,12 +3721,6 @@ function closeChatMini() {
   document.getElementById('chat-mini-window').style.display = 'none';
 }
 
-// 點擊浮動按鈕
-document.getElementById('chat-float-btn').addEventListener('click', function() {
-  const mini = document.getElementById('chat-mini-window');
-  mini.style.display = mini.style.display === 'none' ? 'block' : 'none';
-});
-
 // 初始化聊天歡迎訊息
 function initChatBot() {
   const el = document.getElementById('chat-messages');
@@ -3734,26 +3728,6 @@ function initChatBot() {
   addBotMessage('bot', '您好！我是 GoGofix 智能客服，可以幫您查詢維修報價、預約服務、了解郵寄維修流程等。');
   addBotMessage('bot', '請點擊下方快捷選項或直接輸入問題，我會即時回覆！');
 }
-
-// 在切換到 chat 頁面時初始化
-const origSwitchPage = switchPage;
-switchPage = function(page) {
-  origSwitchPage(page);
-  if (page === 'chat') {
-    setTimeout(initChatBot, 100);
-  }
-  // 切換頁面時關閉迷你窗口
-  document.getElementById('chat-mini-window').style.display = 'none';
-};
-
-// 點擊頁面其他地方關閉迷你窗口
-document.addEventListener('click', function(e) {
-  const mini = document.getElementById('chat-mini-window');
-  const btn = document.getElementById('chat-float-btn');
-  if (mini.style.display === 'block' && !mini.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
-    mini.style.display = 'none';
-  }
-});
 
 // ============ Toast ============
 function showToast(msg) {
@@ -4085,6 +4059,13 @@ function switchPage(page) {
  if (page === 'account' && !accountMember) {
  autoLoginMember();
  }
+ // 如果切換到客服頁，初始化聊天機器人
+ if (page === 'chat') {
+ setTimeout(initChatBot, 100);
+ }
+ // 切換頁面時關閉迷你聊天窗口
+ const chatMini = document.getElementById('chat-mini-window');
+ if (chatMini) chatMini.style.display = 'none';
  // 更新頂部 nav-tab 樣式
  topNavList.forEach(p => {
  const btn = document.querySelector('.nav-tab[onclick*="' + p + '"]');
@@ -4107,6 +4088,25 @@ function initApp() {
  loadRecyclePrices();
  loadPrizePreview();
  switchPage('home');
+ 
+ // 浮動聊天按鈕點擊事件
+ const floatBtn = document.getElementById('chat-float-btn');
+ if (floatBtn) {
+ floatBtn.addEventListener('click', function(e) {
+ e.stopPropagation();
+ const mini = document.getElementById('chat-mini-window');
+ if (mini) mini.style.display = mini.style.display === 'none' ? 'block' : 'none';
+ });
+ }
+ 
+ // 點擊頁面其他地方關閉迷你窗口
+ document.addEventListener('click', function(e) {
+ const mini = document.getElementById('chat-mini-window');
+ const btn = document.getElementById('chat-float-btn');
+ if (mini && mini.style.display === 'block' && btn && !mini.contains(e.target) && !btn.contains(e.target)) {
+ mini.style.display = 'none';
+ }
+ });
 }
 
 if (document.readyState === 'loading') {
