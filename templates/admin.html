@@ -688,7 +688,7 @@ async function loadServiceOrdersAdmin() {
     tbody.innerHTML = orders.map(o => {
       const isMail = o.repair_mode === 'mail';
       const timeOrAddr = isMail
-        ? `<small style="color:#666;">📦 ${o.customer_address||'未填地址'}</small>`
+        ? `<small style="color:#666;">${o.customer_address||'未填地址'}</small>`
         : (o.preferred_time ? new Date(o.preferred_time).toLocaleString('zh-HK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '未指定');
       const payColor = o.payment_status === 'paid' ? '#28a745' : '#ff9500';
       const isNew = o.is_read == 0 ? 'font-weight:700;' : '';

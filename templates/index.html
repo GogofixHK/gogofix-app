@@ -1356,22 +1356,22 @@
  <div class="form-group">
  <label class="form-label">維修方式 *</label>
  <div class="color-select" id="so-mode-select">
- <div class="color-option selected" onclick="selectRepairMode(this,'shop')" style="flex:1; text-align:center;">🏠 到店維修</div>
- <div class="color-option" onclick="selectRepairMode(this,'mail')" style="flex:1; text-align:center;">📦 郵寄維修</div>
+ <div class="color-option selected" onclick="selectRepairMode(this,'shop')" style="flex:1; text-align:center;">到店維修</div>
+ <div class="color-option" onclick="selectRepairMode(this,'mail')" style="flex:1; text-align:center;">郵寄維修</div>
  </div>
  </div>
 
  <!-- 郵寄維修須知（僅郵寄模式顯示） -->
  <div id="so-mail-notice" style="display:none; background:#e3f2fd; border:1px solid #90caf9; border-radius:10px; padding:12px; margin-bottom:16px;">
  <div style="font-size:12px; color:#1565c0; line-height:1.6;">
- <strong>📦 郵寄維修流程：</strong><br>
+ <strong>郵寄維修流程：</strong><br>
  1. 下單後我們會提供店鋪收件地址<br>
  2. 您用順豐速運寄出手機（建議保價）<br>
  3. 在網站補填快遞單號<br>
  4. 我們收件後檢測維修<br>
  5. 維修完成後用順豐寄回给您<br>
  <br>
- <strong>⚠️ 注意事項：</strong><br>
+ <strong>注意事項：</strong><br>
  • 請先備份手機數據，維修過程可能清空數據<br>
  • 請用防靜電袋+氣泡膜包裝，並註明訂單號<br>
  • 貴重手機建議購買快遞保險<br>
@@ -1511,7 +1511,7 @@
 <div class="modal-overlay" id="mail-guide-modal" style="z-index:250;">
  <div class="modal">
  <div class="modal-title">
- <span>📦 郵寄維修 — 寄送指引</span>
+ <span>郵寄維修 — 寄送指引</span>
  <button class="modal-close" onclick="document.getElementById('mail-guide-modal').classList.remove('show')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg></button>
  </div>
 
@@ -1524,19 +1524,19 @@
  </div>
 
  <div style="margin-bottom:14px;">
- <div style="font-size:14px; font-weight:800; margin-bottom:8px;">📬 寄送地址</div>
+ <div style="font-size:14px; font-weight:800; margin-bottom:8px;">寄送地址</div>
  <div style="background:var(--card-solid); border:1px solid var(--separator); border-radius:10px; padding:12px; font-size:13px; line-height:1.8;">
  <strong>GoGofix 手機維修專門店</strong><br>
  收件人：FEI<br>
  地址：<span style="color:#d32f2f;">[店鋪地址 — 稍後更新]</span><br>
  電話：5238 2777<br>
  <br>
- <span style="font-size:12px; color:var(--text2);">⚠️ 請在包裹上註明您的訂單號，以便我們快速識別</span>
+ <span style="font-size:12px; color:var(--text2);">請在包裹上註明您的訂單號，以便我們快速識別</span>
  </div>
  </div>
 
  <div style="margin-bottom:14px;">
- <div style="font-size:14px; font-weight:800; margin-bottom:8px;">📦 包裝建議</div>
+ <div style="font-size:14px; font-weight:800; margin-bottom:8px;">包裝建議</div>
  <div style="font-size:13px; color:var(--text2); line-height:1.8; padding-left:8px;">
  1. 先備份手機所有數據<br>
  2. 關機後用防靜電袋包裹手機<br>
@@ -1548,7 +1548,7 @@
  </div>
 
  <div style="margin-bottom:14px;">
- <div style="font-size:14px; font-weight:800; margin-bottom:8px;">🚚 快遞建議</div>
+ <div style="font-size:14px; font-weight:800; margin-bottom:8px;">快遞建議</div>
  <div style="font-size:13px; color:var(--text2); line-height:1.8;">
  推薦使用 <strong>順豐速運</strong>，可預約上門取件<br>
  <a href="https://www.sf-express.com/hk/tc/" target="_blank" style="color:#1565c0;">前往順豐預約取件 →</a>
@@ -1557,7 +1557,7 @@
 
  <div style="background:#fff3e0; border:1px solid #ffb74d; border-radius:10px; padding:12px; margin-bottom:14px;">
  <div style="font-size:13px; color:#e65100; line-height:1.6;">
- <strong>⚠️ 重要提醒</strong><br>
+ <strong>重要提醒</strong><br>
  • 維修過程可能需要清除數據，請務必先備份<br>
  • 請移除 SIM 卡和記憶卡<br>
  • 如手機有密碼，請在備註中提供或 WhatsApp 告知<br>
@@ -1757,7 +1757,7 @@
  </div>
  <button class="btn-primary" onclick="checkRepair()" style="width:100%;">查詢進度</button>
  <div style="text-align:center; margin-top:12px;">
- <button onclick="document.getElementById('tracking-update-modal').classList.add('show')" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; text-decoration:underline;">📦 已寄出手機？補填快遞單號</button>
+ <button onclick="document.getElementById('tracking-update-modal').classList.add('show')" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; text-decoration:underline;">已寄出手機？補填快遞單號</button>
  </div>
  </div>
  <div id="repair-result"></div>
@@ -2417,7 +2417,7 @@ async function submitServiceOrder() {
  // WhatsApp 通知老闆
  let waMsg;
  if (currentRepairMode === 'mail') {
-  waMsg = `*📦 新郵寄維修訂單！*\n\n訂單號：${data.order_no}\n客戶：${name}\n電話：${phone}\n項目：${serviceName}${partInfo}\n設備：${device || '未填'}\n問題：${issue || '未填'}\n收件地址：${customerAddress}\n回郵快遞：${selectedCourier==='sf'?'順豐速運':'其他'}\n預估：HK$${price}\n付款：${payLabel[selectedPayment]}\n備註：${note || '無'}`;
+  waMsg = `*新郵寄維修訂單*\n\n訂單號：${data.order_no}\n客戶：${name}\n電話：${phone}\n項目：${serviceName}${partInfo}\n設備：${device || '未填'}\n問題：${issue || '未填'}\n收件地址：${customerAddress}\n回郵快遞：${selectedCourier==='sf'?'順豐速運':'其他'}\n預估：HK$${price}\n付款：${payLabel[selectedPayment]}\n備註：${note || '無'}`;
  } else {
   const timeStr = new Date(preferredTime).toLocaleString('zh-HK', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
   waMsg = `*新維修訂單！*\n\n訂單號：${data.order_no}\n客戶：${name}\n電話：${phone}\n項目：${serviceName}${partInfo}\n設備：${device || '未填'}\n問題：${issue || '未填'}\n預估：HK$${price}\n時間：${timeStr}\n付款：${payLabel[selectedPayment]}\n備註：${note || '無'}`;
@@ -3294,10 +3294,10 @@ function renderServiceOrderProgress(o) {
  let trackingHtml = '';
  if (isMail) {
   let custTracking = o.customer_tracking_no
-   ? `<div style="font-size:13px; margin-bottom:4px;">📦 客戶寄出單號：<a href="https://www.sf-express.com/hk/tc/dynamic/function/expresscheck/${o.customer_tracking_no}" target="_blank" style="color:#1565c0;">${o.customer_tracking_no}</a></div>`
-   : '<div style="font-size:13px; margin-bottom:4px; color:#ff9500;">⚠️ 您尚未填寫寄出快遞單號 <button onclick="document.getElementById(\'tracking-update-modal\').classList.add(\'show\'); document.getElementById(\'tracking-order-no\').value=\''+o.order_no+'\'; document.getElementById(\'tracking-phone\').value=\''+o.customer_phone+'\'" style="background:none;border:none;color:#1565c0;font-size:13px;cursor:pointer;text-decoration:underline;">立即補填</button></div>';
+   ? `<div style="font-size:13px; margin-bottom:4px;">客戶寄出單號：<a href="https://www.sf-express.com/hk/tc/dynamic/function/expresscheck/${o.customer_tracking_no}" target="_blank" style="color:#1565c0;">${o.customer_tracking_no}</a></div>`
+   : '<div style="font-size:13px; margin-bottom:4px; color:#ff9500;">尚未填寫寄出快遞單號 <button onclick="document.getElementById(\'tracking-update-modal\').classList.add(\'show\'); document.getElementById(\'tracking-order-no\').value=\''+o.order_no+'\'; document.getElementById(\'tracking-phone\').value=\''+o.customer_phone+'\'" style="background:none;border:none;color:#1565c0;font-size:13px;cursor:pointer;text-decoration:underline;">立即補填</button></div>';
   let shopTracking = o.shop_tracking_no
-   ? `<div style="font-size:13px; margin-bottom:4px;">📬 回郵單號：<a href="https://www.sf-express.com/hk/tc/dynamic/function/expresscheck/${o.shop_tracking_no}" target="_blank" style="color:#28a745;">${o.shop_tracking_no}</a></div>`
+   ? `<div style="font-size:13px; margin-bottom:4px;">回郵單號：<a href="https://www.sf-express.com/hk/tc/dynamic/function/expresscheck/${o.shop_tracking_no}" target="_blank" style="color:#28a745;">${o.shop_tracking_no}</a></div>`
    : '';
   trackingHtml = `<div style="margin-top:10px; background:#e3f2fd; padding:10px; border-radius:8px;">${custTracking}${shopTracking}</div>`;
  }
