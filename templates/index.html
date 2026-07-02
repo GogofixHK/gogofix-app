@@ -971,89 +971,6 @@
  .chat-quick-btn:active { transform: scale(0.95); }
 
  /* ── 浮動聊天按鈕 ───────────────────────── */
- .chat-float-btn {
-  position: fixed;
-  bottom: 100px;
-  right: 20px;
-  width: 56px;
-  height: 56px;
-  background: var(--accent);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  cursor: pointer;
-  z-index: 1000;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
- }
-
- .chat-float-btn:active { transform: scale(0.9); }
-
- /* ── 浮動聊天迷你窗口 ───────────────────── */
- .chat-mini-window {
-  position: fixed;
-  bottom: 100px;
-  right: 20px;
-  width: 340px;
-  max-width: calc(100vw - 40px);
-  background: var(--bg);
-  border-radius: var(--radius-md);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-  z-index: 999;
-  overflow: hidden;
-  border: 1px solid var(--separator);
-  animation: slideUp 0.25s ease;
- }
-
- @keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
- }
-
- .chat-mini-header {
-  background: var(--accent);
-  padding: 14px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
- }
-
- .chat-mini-body {
-  max-height: 260px;
-  overflow-y: auto;
-  padding: 12px;
- }
-
- .chat-mini-msg {
-  background: var(--accent-light);
-  border-radius: 12px 12px 12px 4px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--text);
-  margin-bottom: 8px;
-  line-height: 1.5;
-  max-width: 90%;
- }
-
- .chat-mini-quick {
-  background: var(--bg);
-  border: 1px solid var(--separator);
-  border-radius: 16px;
-  padding: 6px 14px;
-  font-size: 12px;
-  color: var(--text);
-  cursor: pointer;
-  transition: var(--transition-fast);
-  font-family: inherit;
- }
-
- .chat-mini-quick:hover {
-  background: var(--text);
-  color: #fff;
- }
-
  .bottom-nav {
  position: fixed;
  bottom: 0;
@@ -2131,36 +2048,7 @@
  </div>
 </div>
 
-<!-- 浮動聊天按鈕 -->
-<div class="chat-float-btn" id="chat-float-btn">
- <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-</div>
-
-<!-- 浮動聊天迷你窗口 -->
-<div class="chat-mini-window" id="chat-mini-window" style="display:none;">
- <div class="chat-mini-header" onclick="switchPage('chat')">
-  <div style="display:flex;align-items:center;gap:10px;">
-   <div style="width:36px;height:36px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-   </div>
-   <div>
-    <div style="font-weight:700;font-size:14px;color:#fff;">GoGofix 智能客服</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.7);">在線 · 即時回覆</div>
-   </div>
-  </div>
-  <button onclick="event.stopPropagation();closeChatMini();" style="background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:20px;padding:0 4px;">&times;</button>
- </div>
- <div class="chat-mini-body">
-  <div class="chat-mini-msg bot">您好！我是 GoGofix 智能客服 👋<br>可以幫您查詢報價、預約維修、了解服務。</div>
-  <div class="chat-mini-msg bot">請點擊下方選項或直接輸入問題：</div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 4px 8px;">
-   <button class="chat-mini-quick" onclick="openChatBot();botReply('我想查維修報價')">查詢報價</button>
-   <button class="chat-mini-quick" onclick="openChatBot();botReply('預約維修')">預約維修</button>
-   <button class="chat-mini-quick" onclick="openChatBot();botReply('郵寄維修')">郵寄維修</button>
-   <button class="chat-mini-quick" onclick="switchPage('chat')">打開完整客服</button>
-  </div>
- </div>
-</div>
+<!-- 智能客服請點擊底部導航「客服」進入 -->
 
 <!-- ==================== 下單彈窗 ==================== -->
 <div class="modal-overlay" id="order-modal">
@@ -3711,16 +3599,6 @@ function sendChat() {
   botReply(msg);
 }
 
-// 浮動聊天按鈕
-function openChatBot() {
-  document.getElementById('chat-mini-window').style.display = 'none';
-  switchPage('chat');
-}
-
-function closeChatMini() {
-  document.getElementById('chat-mini-window').style.display = 'none';
-}
-
 // 初始化聊天歡迎訊息
 function initChatBot() {
   const el = document.getElementById('chat-messages');
@@ -4063,9 +3941,6 @@ function switchPage(page) {
  if (page === 'chat') {
  setTimeout(initChatBot, 100);
  }
- // 切換頁面時關閉迷你聊天窗口
- const chatMini = document.getElementById('chat-mini-window');
- if (chatMini) chatMini.style.display = 'none';
  // 更新頂部 nav-tab 樣式
  topNavList.forEach(p => {
  const btn = document.querySelector('.nav-tab[onclick*="' + p + '"]');
@@ -4088,25 +3963,6 @@ function initApp() {
  loadRecyclePrices();
  loadPrizePreview();
  switchPage('home');
- 
- // 浮動聊天按鈕點擊事件
- const floatBtn = document.getElementById('chat-float-btn');
- if (floatBtn) {
- floatBtn.addEventListener('click', function(e) {
- e.stopPropagation();
- const mini = document.getElementById('chat-mini-window');
- if (mini) mini.style.display = mini.style.display === 'none' ? 'block' : 'none';
- });
- }
- 
- // 點擊頁面其他地方關閉迷你窗口
- document.addEventListener('click', function(e) {
- const mini = document.getElementById('chat-mini-window');
- const btn = document.getElementById('chat-float-btn');
- if (mini && mini.style.display === 'block' && btn && !mini.contains(e.target) && !btn.contains(e.target)) {
- mini.style.display = 'none';
- }
- });
 }
 
 if (document.readyState === 'loading') {
